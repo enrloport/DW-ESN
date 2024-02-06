@@ -1,2 +1,2 @@
 # DW-ESN
-Deep and Wide E
+Deep and Wide Echo State Network
