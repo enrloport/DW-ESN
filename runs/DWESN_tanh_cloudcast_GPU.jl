@@ -1,5 +1,4 @@
 include("../ESN.jl")
-# using MLDatasets
 using CUDA
 CUDA.allowscalar(false)
 using Logging
@@ -8,16 +7,29 @@ using Wandb
 
 # Random.seed!(42)
 
+function preprocess(img)
+    return map(x-> x > 253 ? 0 : x-3 >= 0 ? (x-3) : 0 , img)
+end
+
+function preprocess_float(img)
+    return map(x-> x > 253 ? Float16(0.0) : x-3 >= 0 ? Float16((x-3)/10) : Float16(0.0) , img)
+end
+
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
 _data_o = ncread(dir*file, "__xarray_dataarray_variable__")
 
 
-u = map(x-> x > 253 ? 0 : x, _data_o[1,:,:])
+# df = DataFrame(img=collect(eachslice(ncread(dir*file, "__xarray_dataarray_variable__"), dims=1)))
+# GC.gc()
+# size(df)[1]
 
-Images.Gray.(u./13 )
 
+u = preprocess(_data_o[1,:,:])
+Images.Gray.(u./10)
+
+countmap(u)
 
 
 repit = 1
@@ -25,7 +37,7 @@ _params = Dict{Symbol,Any}(
      :gpu           => true
     ,:wb            => false
     ,:wb_logger_name=> "DWESN_tanh_mnist_GPU"
-    ,:classes       => [0,1,2,3,4,5,6,7,8,9]
+    ,:classes       => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta          => 1.0e-8
     ,:initial_transient=>2
     ,:train_length  => size(train_y)[1] #-55000
