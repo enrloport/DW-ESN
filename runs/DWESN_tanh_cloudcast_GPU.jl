@@ -1,37 +1,18 @@
 include("../ESN.jl")
-using CUDA
-CUDA.allowscalar(false)
-using Logging
-using Wandb
 
 
-# Random.seed!(42)
-
-function preprocess(img)
-    return map(x-> x > 253 ? 0 : x-3 >= 0 ? (x-3) : 0 , img)
-end
-
-function preprocess_float(img)
-    return map(x-> x > 253 ? Float16(0.0) : x-3 >= 0 ? Float16((x-3)/10) : Float16(0.0) , img)
-end
 
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
 _data_o = ncread(dir*file, "__xarray_dataarray_variable__")
 
-
-# df = DataFrame(img=collect(eachslice(ncread(dir*file, "__xarray_dataarray_variable__"), dims=1)))
-# GC.gc()
-# size(df)[1]
-
-
-u = preprocess(_data_o[1,:,:])
-Images.Gray.(u./10)
-
-countmap(u)
+# u = cc_to_int(_data_o[1,:,:])
+# countmap(u)
+# Images.Gray.(u./10)
 
 
+# PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu           => true
@@ -40,14 +21,19 @@ _params = Dict{Symbol,Any}(
     ,:classes       => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta          => 1.0e-8
     ,:initial_transient=>2
-    ,:train_length  => size(train_y)[1] #-55000
-    ,:test_length   => size(test_y)[1]  #-9000
-    ,:train_f       => __do_train_DWESN_mnist!
-    ,:test_f        => __do_test_DWESN_mnist!
+    ,:train_length  => size(train_y)[1] -55000
+    ,:test_length   => size(test_y)[1]  -9000
+    ,:train_f       => __do_train_DWESN_cloudcast!
+    ,:test_f        => __do_test_DWESN_cloudcast!
+    ,:image_size    => (3,3)
 )
 
-px      = 28
-sz      = (px,px)
+if _params[:gpu] CUDA.allowscalar(false) end
+if _params[:wb]
+    using Logging
+    using Wandb
+end
+
 
 
 for _ in 1:repit
@@ -63,7 +49,7 @@ for _ in 1:repit
         ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
     )
-    _params[:image_size]   = sz
+
     _params[:train_data]   = train_x
     _params[:test_data]    = test_x
     _params[:train_labels] = train_y
