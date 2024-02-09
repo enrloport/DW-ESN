@@ -1,7 +1,5 @@
 include("../ESN.jl")
 
-
-
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
@@ -15,27 +13,36 @@ _data_o = ncread(dir*file, "__xarray_dataarray_variable__")
 # PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
-     :gpu           => true
-    ,:wb            => false
-    ,:wb_logger_name=> "DWESN_tanh_mnist_GPU"
-    ,:classes       => [0,1,2,3,4,5,6,7,8,9,10]
-    ,:beta          => 1.0e-8
-    ,:initial_transient=>2
-    ,:train_length  => size(train_y)[1] -55000
-    ,:test_length   => size(test_y)[1]  -9000
-    ,:train_f       => __do_train_DWESN_cloudcast!
-    ,:test_f        => __do_test_DWESN_cloudcast!
-    ,:image_size    => (3,3)
+     :gpu               => false
+    ,:wb                => false
+    ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
+    ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
+    ,:beta              => 1.0e-8
+    ,:initial_transient => 2
+    ,:train_length      => 5000
+    ,:test_length       => 200
+    ,:train_f           => __do_train_DWESN_cloudcast!
+    ,:test_f            => __do_test_DWESN_cloudcast!
+    ,:target_pixel      => (30,30)
+    ,:radius            => 3
+    ,:step              => 1
 )
 
+_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
+    data              = _data_o
+    , train_length    = _params[:train_length]
+    , test_length     = _params[:train_length]
+    , target_pixel    = _params[:target_pixel]
+    , radius          = _params[:radius]
+    , step            = _params[:step]
+    )
+
+
 if _params[:gpu] CUDA.allowscalar(false) end
-if _params[:wb]
-    using Logging
-    using Wandb
-end
+if _params[:wb] using Logging, Wandb end
 
 
-
+include("../ESN.jl")
 for _ in 1:repit
     _params[:layers] = [(1,200),(1,1000)]
     sd = rand(1:10000)
@@ -50,25 +57,22 @@ for _ in 1:repit
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
     )
 
-    _params[:train_data]   = train_x
-    _params[:test_data]    = test_x
-    _params[:train_labels] = train_y
-    _params[:test_labels]  = test_y
     par = Dict(
-        "Layers" => _params[:layers]
-        , "Total nodes"  => sum( map(x -> x[1]*x[2], _params[:layers] ) )
-        , "Train length" => _params[:train_length]
-        , "Test length"  => _params[:test_length]
-        , "Resized"      => _params[:image_size][1]
-        , "Initial transient"=> _params[:initial_transient]
-        , "seed"         => sd
-        , "sgmds"        => _params_esn[:sgmds]
-        , "alphas" => _params_esn[:alpha]
-        , "densities" => _params_esn[:density]
-        , "R_in_densities" => _params_esn[:Rin_dens]
-        , "rhos" => _params_esn[:rho]
-        , "sigmas" => _params_esn[:sigma]
-        , "R_scalings" => _params_esn[:R_scaling]
+          "Seed"                => sd
+        , "Total nodes"         => sum( map(x -> x[1]*x[2], _params[:layers] ) )
+        , "Layers"              => _params[:layers]
+        , "Train length"        => _params[:train_length]
+        , "Test length"         => _params[:test_length]
+        , "Target pixel"        => _params[:target_pixel]
+        , "Radius"              => _params[:radius]
+        , "Initial transient"   => _params[:initial_transient]
+        , "Sigmoids"            => _params_esn[:sgmds]
+        , "Alphas"              => _params_esn[:alpha]
+        , "Densities"           => _params_esn[:density]
+        , "R_in_densities"      => _params_esn[:Rin_dens]
+        , "Rhos"                => _params_esn[:rho]
+        , "Sigmas"              => _params_esn[:sigma]
+        , "R_scalings"          => _params_esn[:R_scaling]
         )
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
