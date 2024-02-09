@@ -211,7 +211,7 @@ function mse(l1,l2)
 end
 
 
-function confusion_matrix(classes::Vector{String}, predictions::Vector{Int64}, targets::Vector{Int64})
+function confusion_matrix(classes::Vector{String}, predictions::Union{Vector{UInt8},Vector{Int64} }, targets::Vector{Int64})
     len = length(classes)
 
     mtx = zeros(len,len)
