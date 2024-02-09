@@ -1,4 +1,4 @@
-function _step(deepE, data,t,f)
+function _step_mnist(deepE, data,t,f)
     for _esn in deepE.layers[1].esns
         a = data[:,:,t]
         __update(_esn, a, f )

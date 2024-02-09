@@ -1,4 +1,4 @@
-function _step_dwesnia(deepE, data,t,f)
+function _step_mnist_dwesnia(deepE, data,t,f)
     a = data[:,:,t]
     for _esn in deepE.layers[1].esns
         __update(_esn, a, f )

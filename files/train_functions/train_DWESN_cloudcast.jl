@@ -1,6 +1,6 @@
-function _step(deepE, data,t,f)
+function _step_cloudcast(deepE, data,t,f)
     for _esn in deepE.layers[1].esns
-        a = data[:,:,t]
+        a = data[t,:,:]
         __update(_esn, a, f )
     end
 
@@ -12,18 +12,18 @@ function _step(deepE, data,t,f)
     end
 end
 
-function __fill_X_DWESN_mnist!(deepE, args::Dict )
+function __fill_X_DWESN_cloudcast!(deepE, args::Dict )
 
     f = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
 
     for t in 1:args[:train_length]
         for _ in 1:args[:initial_transient]
-            _step(deepE, args[:train_data], t, f)
+            _step_cloudcast(deepE, args[:train_data], t, f)
         end
 
-        _step(deepE, args[:train_data], t, f)
+        _step_cloudcast(deepE, args[:train_data], t, f)
 
-        deepE.X[:,t] = vcat(f(args[:train_data][:,:,t]), [ _e.x for l in deepE.layers for _e in l.esns]...  , f([1]) )
+        deepE.X[:,t] = vcat(f(args[:train_data][t,:,:]), [ _e.x for l in deepE.layers for _e in l.esns]...  , f([1]) )
         for layer in deepE.layers
             for _esn in layer.esns
                 _esn.x[:] = _esn.x .* 0
@@ -33,7 +33,7 @@ function __fill_X_DWESN_mnist!(deepE, args::Dict )
 end
 
 
-function __make_Rout_DWESN_mnist!(deepE,args)
+function __make_Rout_DWESN_cloudcast!(deepE,args)
     X             = deepE.X
     classes       = args[:classes]
     classes_Yt    = Dict( c => zeros(args[:train_length]) for c in classes )  # New dataset for each class
@@ -54,10 +54,10 @@ function __make_Rout_DWESN_mnist!(deepE,args)
 end
 
 
-function __do_train_DWESN_mnist!(deepE, args)
+function __do_train_DWESN_cloudcast!(deepE, args)
     num   = args[:train_length]
     flt = vcat(deepE.layers...)
-    deepE.X = zeros( sum([layer.nodes for layer in flt ]) + args[:image_size][1]*args[:image_size][2] + 1, num)
+    deepE.X = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
 
     for layer in deepE.layers
         for _esn in layer.esns
@@ -74,6 +74,6 @@ function __do_train_DWESN_mnist!(deepE, args)
         end
     end
 
-    __fill_X_DWESN_mnist!(deepE,args)
-    __make_Rout_DWESN_mnist!(deepE,args)
+    __fill_X_DWESN_cloudcast!(deepE,args)
+    __make_Rout_DWESN_cloudcast!(deepE,args)
 end
