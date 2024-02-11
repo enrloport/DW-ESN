@@ -1,7 +1,6 @@
 
 function do_batch_dwesn(_params_esn, _params,sd)
-    sz       = _params[:image_size]
-    im_sz    = sz[1]*sz[2]
+    im_sz    = (_params[:radius]*2 + 1)^2
     rhos     = _params_esn[:rho]
     sigmas   = _params_esn[:sigma]
     sgmds    = _params_esn[:sgmds]
@@ -53,14 +52,15 @@ function do_batch_dwesn(_params_esn, _params,sd)
         ,"Test time"=> tm_test
        , "Error"    => deepE.error
     )
+    cls_nms = string.(_params[:classes])
     if _params[:wb] 
         Wandb.log(_params[:lg], to_log )
         Wandb.log(_params[:lg], Dict( "conf_mat"  => Wandb.wandb.plot.confusion_matrix(
-                    y_true = test_y[1:_params[:test_length]], preds = [x[1] for x in deepE.Y], class_names = ["0","1","2","3","4","5","6","7","8","9"]
+                    y_true = _params[:test_labels][1:_params[:test_length]], preds = [x[1] for x in deepE.Y], class_names = cls_nms
                 )))
     else
         display(to_log)
-        display(confusion_matrix(["0","1","2","3","4","5","6","7","8","9"],test_y[1:_params[:test_length]], [x[1] for x in deepE.Y]) )
+        display(confusion_matrix(cls_nms,_params[:test_labels], [x[1] for x in deepE.Y]) )
     end
     return deepE
 end
