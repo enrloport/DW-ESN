@@ -13,14 +13,14 @@ _data_o = ncread(dir*file, "__xarray_dataarray_variable__")
 # PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
-     :gpu               => false
+     :gpu               => true
     ,:wb                => false
     ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 2
-    ,:train_length      => 5000
-    ,:test_length       => 200
+    ,:initial_transient => 1000
+    ,:train_length      => 50000
+    ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast!
     ,:target_pixel      => (30,30)
@@ -31,7 +31,7 @@ _params = Dict{Symbol,Any}(
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
     data              = _data_o
     , train_length    = _params[:train_length]
-    , test_length     = _params[:train_length]
+    , test_length     = _params[:test_length]
     , target_pixel    = _params[:target_pixel]
     , radius          = _params[:radius]
     , step            = _params[:step]
@@ -42,9 +42,8 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
-include("../ESN.jl")
 for _ in 1:repit
-    _params[:layers] = [(1,200),(1,1000)]
+    _params[:layers] = [(10,200)]
     sd = rand(1:10000)
     Random.seed!(sd)
     _params_esn = Dict{Symbol,Any}(
