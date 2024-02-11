@@ -4,19 +4,12 @@ function __do_test_DWESN_cloudcast!(deepE, args::Dict)
 
     classes_Y    = Array{Tuple{Float64,Int,Int}}[]
     wrong_class  = []
-    deepE.Y        = []
+    deepE.Y      = []
 
-    if args[:gpu]
-        f = (u) -> CuArray(reshape(u, :, 1))
-    else
-        f = (u) -> reshape(u, :, 1)
-    end
+    f = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
 
     for t in 1:test_length
 
-        for _ in 1:args[:initial_transient]
-            _step_cloudcast(deepE, args[:test_data], t, f)
-        end
         _step_cloudcast(deepE, args[:test_data], t, f)
 
         x = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in deepE.layers for _e in l.esns]...  , f([1]) )
@@ -33,14 +26,9 @@ function __do_test_DWESN_cloudcast!(deepE, args::Dict)
             push!(wrong_class, (args[:test_data][t], pairs_sorted[1], pairs_sorted[2], t ) ) 
         end
 
-        push!(deepE.Y,[pairs_sorted[1][2] ;])
+        push!(deepE.Y,[Int8(pairs_sorted[1][2]) ;])
         push!(classes_Y, pairs )
 
-        for layer in deepE.layers
-            for _esn in layer.esns
-                _esn.x[:] = _esn.x .* 0
-            end
-        end
     end
 
     deepE.wrong_class= wrong_class
