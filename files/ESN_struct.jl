@@ -16,20 +16,20 @@ Base.@kwdef mutable struct ESN
     F_in      ::Function= (f,u) -> R_in * f(u)
 end
 
-Base.@kwdef mutable struct deepESN
-    esns            ::Array{Any}
-    train_function  ::Function      = __do_train_deepESN!
-    test_function   ::Function      = __do_test_deepESN!
-    X               ::Mtx           = zeros(1,1)
-    R_out           ::Mtx           = zeros(1,1)
-    beta            ::Float64       = 1.0e-8
-    error           ::Float64       = 1.0
-    wrong_class     ::Array{Any}    = []
-    classes_Y       ::Array{Any}    = []
-    Y_target        ::Array{Any}    = []
-    Y               ::Array{Any}    = []
-    classes_Routs   ::Dict{Int16,Union{Array{Float64},CuArray}} = Dict()
-end
+# Base.@kwdef mutable struct deepESN
+#     esns            ::Array{Any}
+#     train_function  ::Function      = __do_train_deepESN!
+#     test_function   ::Function      = __do_test_deepESN!
+#     X               ::Mtx           = zeros(1,1)
+#     R_out           ::Mtx           = zeros(1,1)
+#     beta            ::Float64       = 1.0e-8
+#     error           ::Float64       = 1.0
+#     wrong_class     ::Array{Any}    = []
+#     classes_Y       ::Array{Any}    = []
+#     Y_target        ::Array{Any}    = []
+#     Y               ::Array{Any}    = []
+#     classes_Routs   ::Dict{Int16,Union{Array{Float64},CuArray}} = Dict()
+# end
 
 
 Base.@kwdef mutable struct layerESN
