@@ -32,17 +32,17 @@ function do_batch_dwesn(_params_esn, _params,sd)
     end   
 
     tms = @elapsed begin
-        deepE = DWESN(
+        dwE = DWESN(
             layers = layers
             ,beta=_params[:beta] 
             ,train_function = _params[:train_f]
             ,test_function = _params[:test_f]
             )
         tm_train = @elapsed begin
-            deepE.train_function(deepE,_params)
+            dwE.train_function(dwE,_params)
         end
         tm_test = @elapsed begin
-            deepE.test_function(deepE,_params)
+            dwE.test_function(dwE,_params)
         end
     end
  
@@ -50,17 +50,17 @@ function do_batch_dwesn(_params_esn, _params,sd)
         "Total time"  => tms
         ,"Train time"=> tm_train
         ,"Test time"=> tm_test
-       , "Error"    => deepE.error
+       , "Error"    => dwE.error
     )
     cls_nms = string.(_params[:classes])
     if _params[:wb] 
         Wandb.log(_params[:lg], to_log )
         Wandb.log(_params[:lg], Dict( "conf_mat"  => Wandb.wandb.plot.confusion_matrix(
-                    y_true = _params[:test_labels][1:_params[:test_length]], preds = [x[1] for x in deepE.Y], class_names = cls_nms
+                    y_true = _params[:test_labels][1:_params[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
                 )))
     else
         display(to_log)
-        display(confusion_matrix(cls_nms,_params[:test_labels], [x[1] for x in deepE.Y]) )
+        display(confusion_matrix(cls_nms,_params[:test_labels], [x[1] for x in dwE.Y]) )
     end
-    return deepE
+    return dwE
 end
