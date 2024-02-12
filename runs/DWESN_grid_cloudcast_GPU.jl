@@ -56,13 +56,13 @@ for N in [50, 100, 200, 300, 400, 500, 750, 1000, 2000, 3000, 4000, 5000]
 
                 _params[:layers] = [(1,N)]
                 _params_esn = Dict{Symbol,Any}(
-                    :R_scaling => [ [1.0 for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
-                    ,:Rin_dens => [ [1.0 for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
-                    ,:sigma    => [ [1.0 for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
-                    ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for layer in 1:length(_params[:layers]) ]
-                    ,:alpha    => [ [A for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
-                    ,:density  => [ [D for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
-                    ,:rho      => [ [R for _ in 1:_params[:layers][i][1]] for layer in _params[:layers]]
+                    :R_scaling => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
+                    ,:Rin_dens => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
+                    ,:sigma    => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
+                    ,:sgmds    => [ [tanh for _ in 1:layer[1]] for layer in 1:length(_params[:layers]) ]
+                    ,:alpha    => [ [A for _ in 1:layer[1]] for layer in _params[:layers]]
+                    ,:density  => [ [D for _ in 1:layer[1]] for layer in _params[:layers]]
+                    ,:rho      => [ [R for _ in 1:layer[1]] for layer in _params[:layers]]
                 )
 
                 par = Dict(
