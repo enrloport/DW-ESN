@@ -3,12 +3,14 @@ include("../ESN.jl")
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
-_data_o = ncread(dir*file, "__xarray_dataarray_variable__")
+all     = ncread(dir*file, "__xarray_dataarray_variable__")
+
+# files   = ["2017M01.nc","2017M02.nc","2017M03.nc","2017M04.nc","2017M05.nc" ]
+# all     = cat([ ncread(dir*fl, "__xarray_dataarray_variable__") for fl in files ]... , dims=1)
 
 # u = cc_to_int(_data_o[1,:,:])
 # countmap(u)
 # Images.Gray.(u./10)
-
 
 # PARAMS
 repit = 1
@@ -29,7 +31,7 @@ _params = Dict{Symbol,Any}(
 )
 
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
-    data              = _data_o
+    data              = all
     , train_length    = _params[:train_length]
     , test_length     = _params[:test_length]
     , target_pixel    = _params[:target_pixel]
@@ -38,14 +40,20 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     )
 
 
+# u = cc_to_int(_params[:train_data][1,:,:])
+# u2 = cc_to_int(_params[:train_data][2,:,:])
+# Images.Gray.(u./10)
+    
 if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
 for _ in 1:repit
-    _params[:layers] = [(10,200)]
+    _params[:layers] = [(1,300)]
     sd = rand(1:10000)
     Random.seed!(sd)
+    # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
+
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
