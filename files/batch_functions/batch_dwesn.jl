@@ -1,32 +1,26 @@
 
-function do_batch_dwesn(_params_esn, _params,sd)
-    im_sz    = (_params[:radius]*2 + 1)^2
-    rhos     = _params_esn[:rho]
-    sigmas   = _params_esn[:sigma]
-    sgmds    = _params_esn[:sgmds]
-    densities= _params_esn[:density]
-    rin_dens = _params_esn[:Rin_dens]
-    alphas   = _params_esn[:alpha]
-    r_scales = _params_esn[:R_scaling]
-    p_lys    = _params[:layers]
+function do_batch_dwesn(_params_esn, _params)
+
+    p,pe  = _params, _params_esn
+    im_sz = (p[:radius]*2 + 1)^2
 
     layers = []
     layer1 = layerESN( esns = [
                 ESN( 
-                     R      = new_R(p_lys[1][2], density=densities[1][i], rho=rhos[1][i], gpu=_params[:gpu])
-                    ,R_in   = new_R_in(p_lys[1][2], im_sz , sigma = sigmas[1][i] ,gpu=_params[:gpu], density=rin_dens[1][i])
-                    ,R_scaling = r_scales[1][i], alpha = alphas[1][i], rho = rhos[1][i], sigma = sigmas[1][i], sgmd = sgmds[1][i]
-                ) for i in 1:p_lys[1][1]
+                     R      = new_R(pe[:layers][1][2], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
+                    ,R_in   = new_R_in(pe[:layers][1][2], im_sz , sigma = pe[:sigma][1][i] ,gpu=p[:gpu], density=pe[:Rin_dens][1][i])
+                    ,R_scaling = r_scales[1][i], alpha = pe[:alpha][1][i], rho = pe[:rho][1][i], sigma = pe[:sigma][1][i], sgmd = pe[:sgmds][1][i]
+                ) for i in 1:pe[:layers][1][1]
             ])
     push!(layers,layer1)
 
-    for l in 2:length(_params[:layers])
+    for l in 2:length(p[:layers])
         layer = layerESN( esns = [
             ESN(
-                 R      = new_R(p_lys[l][2], density=densities[l][i], rho=rhos[l][i], gpu=_params[:gpu])
-                ,R_in   = new_R_in(p_lys[l][2], layers[l-1].nodes, sigma = sigmas[l][i] ,gpu=_params[:gpu], density=rin_dens[l][i] )
-                ,R_scaling = r_scales[l][i], alpha  = alphas[l][i], rho = rhos[l][i], sigma = sigmas[l][i], sgmd = sgmds[l][i]
-            ) for i in 1:p_lys[l][1]
+                 R      = new_R(pe[:layers][l][2], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
+                ,R_in   = new_R_in(pe[:layers][l][2], layers[l-1].nodes, sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
+                ,R_scaling = r_scales[l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
+            ) for i in 1:pe[:layers][l][1]
         ])
         push!(layers,layer)
     end   
@@ -34,33 +28,41 @@ function do_batch_dwesn(_params_esn, _params,sd)
     tms = @elapsed begin
         dwE = DWESN(
             layers = layers
-            ,beta=_params[:beta] 
-            ,train_function = _params[:train_f]
-            ,test_function = _params[:test_f]
+            ,beta=p[:beta] 
+            ,train_function = p[:train_f]
+            ,test_function = p[:test_f]
             )
         tm_train = @elapsed begin
-            dwE.train_function(dwE,_params)
+            dwE.train_function(dwE,p)
         end
         tm_test = @elapsed begin
-            dwE.test_function(dwE,_params)
+            dwE.test_function(dwE,p)
         end
     end
  
     to_log = Dict(
-        "Total time"  => tms
-        ,"Train time"=> tm_train
-        ,"Test time"=> tm_test
-       , "Error"    => dwE.error
+        "Total time"        => tms
+        ,"Train time"       => tm_train
+        ,"Test time"        => tm_test
+        ,"Error"            => dwE.error
+        ,"Layers"           => p[:layers]
+        , "Sigmoids"        => pe[:pe[:sgmds]]
+        , "Alphas"          => pe[:alpha]
+        , "Densities"       => pe[:density]
+        , "R_in_densities"  => pe[:Rin_dens]
+        , "Rhos"            => pe[:rho]
+        , "Sigmas"          => pe[:sigma]
+        , "R_scalings"      => pe[:R_scaling]
     )
-    cls_nms = string.(_params[:classes])
-    if _params[:wb] 
-        Wandb.log(_params[:lg], to_log )
-        Wandb.log(_params[:lg], Dict( "conf_mat"  => Wandb.wandb.plot.confusion_matrix(
-                    y_true = _params[:test_labels][1:_params[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
+    cls_nms = string.(p[:classes])
+    if p[:wb] 
+        Wandb.log(p[:lg], to_log )
+        Wandb.log(p[:lg], Dict( "conf_mat"  => Wandb.wandb.plot.confusion_matrix(
+                    y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
                 )))
     else
         display(to_log)
-        display(confusion_matrix(cls_nms,_params[:test_labels], [x[1] for x in dwE.Y]) )
+        display(confusion_matrix(cls_nms,p[:test_labels], [x[1] for x in dwE.Y]) )
     end
     return dwE
 end
