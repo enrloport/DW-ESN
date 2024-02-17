@@ -80,6 +80,9 @@ function fitness(x)
         ,:rho      => [ [R    for _ in 1:layer[1]] for layer in _params[:layers]]
     )
 
+    # if _params[:wb]
+    #     Wandb.log(_params[:lg], Dict("Alpha" => A, "Density"=>D, "Rho"=>R) )
+    # end
     r1=[]
     tm = @elapsed begin
         r1 = do_batch_dwesn(_params_esn,_params)
@@ -104,17 +107,18 @@ for _it in 1:10
     sd = rand(1:10000)
     Random.seed!(sd)
     par["Seed"] = sd
-    if _params[:wb]
-        _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        if _it == 1
-            Wandb.log(_params[:lg], pso_dict )
-        end
-        Wandb.log(_params[:lg], par )
-    else
-        display(par)
-        display(pso_dict)
-        println(" ")
-    end
+    _params[:seed]=sd
+    # if _params[:wb]
+    #     _params[:lg] = wandb_logger(_params[:wb_logger_name])
+    #     if _it == 1
+    #         Wandb.log(_params[:lg], pso_dict )
+    #     end
+    #     Wandb.log(_params[:lg], par )
+    # else
+    #     display(par)
+    #     display(pso_dict)
+    #     println(" ")
+    # end
 
     pso = PSO(;information=Metaheuristics.Information()
         ,N  = pso_dict["N"]
