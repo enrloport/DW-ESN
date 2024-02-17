@@ -17,8 +17,8 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 
 ############################################################################ PARAMS
-sd = rand(1:10000)
-Random.seed!(sd)
+#sd = rand(1:10000)
+#Random.seed!(sd)
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
@@ -33,19 +33,24 @@ _params = Dict{Symbol,Any}(
     ,:test_f            => __do_test_DWESN_cloudcast!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
-    ,:seed              => sd
+    #,:seed              => sd
     ,:step              => 1
 )
 
 if _params[:gpu] CUDA.allowscalar(false) end
 
 par = filter(kv-> kv[1] ∉ [:wb_logger_name,:train_f,:test_f,:lg], _params)
+par = Dict(
+           string(kv[1]) => kv[2]
+           for kv in par
+)
+
 if _params[:wb]
     using Logging, Wandb
     _params[:lg] = wandb_logger(_params[:wb_logger_name])
     Wandb.log(_params[:lg], par )
 end
-display(par)
+display(_params)
 
 
 
@@ -77,7 +82,7 @@ function fitness(x)
 
     r1=[]
     tm = @elapsed begin
-        r1 = do_batch_dwesn(_params_esn,_params, sd)
+        r1 = do_batch_dwesn(_params_esn,_params)
     end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
@@ -91,11 +96,14 @@ pso_dict = Dict(
     ,"C1" => 2.0
     ,"C2" => 1.5
     ,"w"  => 1.0
-    ,"max_iter" => 50
+    ,"max_iter" => 30
 )
 
 
-for _it in 1:1
+for _it in 1:10
+    sd = rand(1:10000)
+    Random.seed!(sd)
+    par["Seed"] = sd
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
         if _it == 1
@@ -129,4 +137,4 @@ for _it in 1:1
 end
 
 
-# EOF 
+# EOF
