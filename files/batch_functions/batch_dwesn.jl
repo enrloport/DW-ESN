@@ -7,20 +7,20 @@ function do_batch_dwesn(_params_esn, _params)
     layers = []
     layer1 = layerESN( esns = [
                 ESN( 
-                     R      = new_R(pe[:layers][1][2], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
-                    ,R_in   = new_R_in(pe[:layers][1][2], im_sz , sigma = pe[:sigma][1][i] ,gpu=p[:gpu], density=pe[:Rin_dens][1][i])
-                    ,R_scaling = r_scales[1][i], alpha = pe[:alpha][1][i], rho = pe[:rho][1][i], sigma = pe[:sigma][1][i], sgmd = pe[:sgmds][1][i]
-                ) for i in 1:pe[:layers][1][1]
+                     R      = new_R(p[:layers][1][2], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
+                    ,R_in   = new_R_in(p[:layers][1][2], im_sz , sigma = pe[:sigma][1][i] ,gpu=p[:gpu], density=pe[:Rin_dens][1][i])
+                    ,R_scaling = pe[:R_scaling][1][i], alpha = pe[:alpha][1][i], rho = pe[:rho][1][i], sigma = pe[:sigma][1][i], sgmd = pe[:sgmds][1][i]
+                ) for i in 1:p[:layers][1][1]
             ])
     push!(layers,layer1)
 
     for l in 2:length(p[:layers])
         layer = layerESN( esns = [
             ESN(
-                 R      = new_R(pe[:layers][l][2], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
-                ,R_in   = new_R_in(pe[:layers][l][2], layers[l-1].nodes, sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
-                ,R_scaling = r_scales[l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
-            ) for i in 1:pe[:layers][l][1]
+                 R      = new_R(p[:layers][l][2], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
+                ,R_in   = new_R_in(p[:layers][l][2], layers[l-1].nodes, sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
+                ,R_scaling = pe[:R_scaling][l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
+            ) for i in 1:p[:layers][l][1]
         ])
         push!(layers,layer)
     end   
@@ -46,7 +46,7 @@ function do_batch_dwesn(_params_esn, _params)
         ,"Test time"        => tm_test
         ,"Error"            => dwE.error
         ,"Layers"           => p[:layers]
-        , "Sigmoids"        => pe[:pe[:sgmds]]
+        , "Sigmoids"        => pe[:sgmds]
         , "Alphas"          => pe[:alpha]
         , "Densities"       => pe[:density]
         , "R_in_densities"  => pe[:Rin_dens]
