@@ -221,3 +221,8 @@ function confusion_matrix(classes::Vector{String}, predictions::Vector{Int8}, ta
     end
     return mtx
 end
+
+
+function test_pso_convergence(c1,c2,w)
+    return 1 > w > 0.5*(c1+c2) - 1 >= 0 , w, 0.5*(c1+c2) - 1 
+end
