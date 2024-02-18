@@ -56,6 +56,7 @@ function do_batch_dwesn(_params_esn, _params)
         , "alpha" => pe[:alpha][1][1]
         , "density" => pe[:density][1][1]
         , "rho" => pe[:rho][1][1]
+        , "sigma" => pe[:sigma][1][1]
     )
     cls_nms = string.(p[:classes])
     if p[:wb]
