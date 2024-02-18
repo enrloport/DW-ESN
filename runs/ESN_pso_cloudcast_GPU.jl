@@ -68,12 +68,12 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
 
 ############################################################################ PSO ALGORITHM
 function fitness(x)
-    A,D,R = x[1], x[2], x[3]
+    A,D,R,S = x[1], x[2], x[3], x[4]
 
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [ [1.0  for _ in 1:layer[1]] for layer in _params[:layers]]
         ,:Rin_dens => [ [1.0  for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:sigma    => [ [1.0  for _ in 1:layer[1]] for layer in _params[:layers]]
+        ,:sigma    => [ [S  for _ in 1:layer[1]] for layer in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:layer[1]] for layer in _params[:layers]]
         ,:alpha    => [ [A    for _ in 1:layer[1]] for layer in _params[:layers]]
         ,:density  => [ [D    for _ in 1:layer[1]] for layer in _params[:layers]]
@@ -98,27 +98,25 @@ pso_dict = Dict(
     "N"  => 20
     ,"C1" => 2.0
     ,"C2" => 1.5
-    ,"w"  => 1.0
+    ,"w"  => 0.8
     ,"max_iter" => 30
 )
 
 
-for _it in 1:10
+for _it in 1:1
     sd = rand(1:10000)
     Random.seed!(sd)
-    par["Seed"] = sd
-    _params[:seed]=sd
-    # if _params[:wb]
-    #     _params[:lg] = wandb_logger(_params[:wb_logger_name])
-    #     if _it == 1
-    #         Wandb.log(_params[:lg], pso_dict )
-    #     end
-    #     Wandb.log(_params[:lg], par )
-    # else
-    #     display(par)
-    #     display(pso_dict)
-    #     println(" ")
-    # end
+    pso_dict["Seed"] = sd
+    if _params[:wb]
+        _params[:lg] = wandb_logger(_params[:wb_logger_name])
+        if _it == 1
+            Wandb.log(_params[:lg], pso_dict )
+        end
+    else
+        display(par)
+        display(pso_dict)
+        println(" ")
+    end
 
     pso = PSO(;information=Metaheuristics.Information()
         ,N  = pso_dict["N"]
@@ -128,9 +126,9 @@ for _it in 1:10
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    # Cota superior e inferior de individuos. alpha, density, rho
-    lx = [0.01, 0.01, 0.01 ]'
-    ux = [0.99,  0.7, 4.0  ]'
+    # Cota superior e inferior de individuos. alpha, density, rho, sigma
+    lx = [0.01, 0.01, 0.01, 0.001]'
+    ux = [0.99,  0.7, 10.0, 1.5]'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )
