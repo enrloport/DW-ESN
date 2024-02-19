@@ -60,9 +60,11 @@ function do_batch_dwesn(_params_esn, _params)
     )
     cls_nms = string.(p[:classes])
     if p[:wb]
-        to_log["conf_mat"] = Wandb.wandb.plot.confusion_matrix(
-            y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
-        )
+        if p[:confusion_matrix]
+            to_log["conf_mat"] = Wandb.wandb.plot.confusion_matrix(
+                y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
+            )
+        end
         Wandb.log(p[:lg], to_log )
     else
         display(to_log)
