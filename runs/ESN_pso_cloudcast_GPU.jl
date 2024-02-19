@@ -22,6 +22,7 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
+    ,:confusion_matrix  => false
     ,:wb_logger_name    => "ESN_pso_cloudcast_GPU"
     ,:layers            => [(1,1000)]
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
@@ -39,7 +40,7 @@ _params = Dict{Symbol,Any}(
 
 if _params[:gpu] CUDA.allowscalar(false) end
 
-par = filter(kv-> kv[1] ∉ [:wb_logger_name,:train_f,:test_f,:lg], _params)
+par = filter(kv-> kv[1] ∉ [:wb_logger_name,:train_f,:test_f,:lg,:confusion_matrix], _params)
 par = Dict(
            string(kv[1]) => kv[2]
            for kv in par
@@ -80,9 +81,6 @@ function fitness(x)
         ,:rho      => [ [R    for _ in 1:layer[1]] for layer in _params[:layers]]
     )
 
-    # if _params[:wb]
-    #     Wandb.log(_params[:lg], Dict("Alpha" => A, "Density"=>D, "Rho"=>R) )
-    # end
     r1=[]
     tm = @elapsed begin
         r1 = do_batch_dwesn(_params_esn,_params)
@@ -95,11 +93,11 @@ function fitness(x)
 end
 
 pso_dict = Dict(
-    "N"  => 20
-    ,"C1" => 2.0
-    ,"C2" => 1.5
-    ,"w"  => 0.8
-    ,"max_iter" => 30
+    "N"  => 10
+    ,"C1" => 1.2
+    ,"C2" => 1.0
+    ,"w"  => 0.7
+    ,"max_iter" => 40
 )
 
 
@@ -109,9 +107,7 @@ for _it in 1:1
     pso_dict["Seed"] = sd
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        if _it == 1
-            Wandb.log(_params[:lg], pso_dict )
-        end
+        Wandb.log(_params[:lg], pso_dict )
     else
         display(par)
         display(pso_dict)
