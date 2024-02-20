@@ -17,8 +17,7 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 
 ############################################################################ PARAMS
-#sd = rand(1:10000)
-#Random.seed!(sd)
+
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
@@ -34,7 +33,6 @@ _params = Dict{Symbol,Any}(
     ,:test_f            => __do_test_DWESN_cloudcast!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
-    #,:seed              => sd
     ,:step              => 1
 )
 
@@ -81,6 +79,7 @@ function fitness(x)
         ,:rho      => [ [R    for _ in 1:layer[1]] for layer in _params[:layers]]
     )
 
+    Random.seed!(_params[:seed])
     r1=[]
     tm = @elapsed begin
         r1 = do_batch_dwesn(_params_esn,_params)
@@ -93,18 +92,18 @@ function fitness(x)
 end
 
 pso_dict = Dict(
-    "N"  => 10
-    ,"C1" => 1.2
-    ,"C2" => 1.0
-    ,"w"  => 0.7
-    ,"max_iter" => 40
+    "N"  => 20
+    ,"C1" => 1.5
+    ,"C2" => 1.2
+    ,"w"  => 0.5
+    ,"max_iter" => 30
 )
-
 
 for _it in 1:1
     sd = rand(1:10000)
     Random.seed!(sd)
     pso_dict["Seed"] = sd
+    _params[:seed] = sd
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
         Wandb.log(_params[:lg], pso_dict )
