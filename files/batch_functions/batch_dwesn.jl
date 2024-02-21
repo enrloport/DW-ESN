@@ -53,6 +53,7 @@ function do_batch_dwesn(_params_esn, _params)
         , "Rhos"            => pe[:rho]
         , "Sigmas"          => pe[:sigma]
         , "R_scalings"      => pe[:R_scaling]
+        , "nodes" => sum( [ l[1]*l[2] for l in p[:layers] ] )
         , "alpha" => pe[:alpha][1][1]
         , "density" => pe[:density][1][1]
         , "rho" => pe[:rho][1][1]
