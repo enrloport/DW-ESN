@@ -56,10 +56,10 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , step            = _params[:step]
     )
 
-for N in [100, 300, 600, 1000, 2000]
-    for R in [0.001, 0.1, 0.5, 1.0, 1.5, 2.0, 4.0]
-        for D in [x/10 for x in 1:7]
-            for A in [x/10 for x in 1:9]
+for R in [0.001, 0.1, 0.5, 1.0, 1.5, 2.0, 3.0]
+    for D in [x/10 for x in 1:7]
+        for A in [x/10 for x in 1:9]
+            for N in [100, 300, 600, 1000, 2000]
 
                 _params[:layers] = [(1,N)]
                 _params_esn = Dict{Symbol,Any}(
