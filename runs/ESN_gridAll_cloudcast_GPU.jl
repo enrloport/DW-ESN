@@ -34,6 +34,10 @@ _params = Dict{Symbol,Any}(
 )
 
 par = filter(kv-> kv[1] ∉ [:wb_logger_name,:train_f,:test_f,:lg], _params)
+par = Dict(
+           string(kv[1]) => kv[2]
+           for kv in par
+)
 if _params[:wb]
     using Logging, Wandb
     _params[:lg] = wandb_logger(_params[:wb_logger_name])
