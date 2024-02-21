@@ -17,7 +17,8 @@ sd = rand(1:10000)
 Random.seed!(sd)
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => false
+    ,:wb                => true
+    ,:confusion_matrix  => false
     ,:wb_logger_name    => "ESN_gridAll_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
@@ -51,7 +52,7 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , step            = _params[:step]
     )
 
-for N in [100, 300, 600, 1000, 2000, 3000, 4000, 5000]
+for N in [100, 300, 600, 1000, 2000]
     for A in [x/10 for x in 1:9]
         for D in [x/10 for x in 1:7]
             for R in [0.001, 0.1, 0.5, 1.0, 1.5, 2.0, 4.0]
@@ -69,7 +70,7 @@ for N in [100, 300, 600, 1000, 2000, 3000, 4000, 5000]
 
                 r1=[]
                 tm = @elapsed begin
-                    r1 = do_batch_dwesn(_params_esn,_params, sd)
+                    r1 = do_batch_dwesn(_params_esn,_params)
                 end
 
                 printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
