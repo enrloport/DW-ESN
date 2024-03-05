@@ -5,13 +5,6 @@ dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
-# files   = ["2017M01.nc","2017M02.nc","2017M03.nc","2017M04.nc","2017M05.nc" ]
-# all     = cat([ ncread(dir*fl, "__xarray_dataarray_variable__") for fl in files ]... , dims=1)
-
-# u = cc_to_int(_data_o[1,:,:])
-# countmap(u)
-# Images.Gray.(u./10)
-
 # PARAMS
 _params = Dict{Symbol,Any}(
      :gpu               => true
@@ -57,13 +50,13 @@ for r in [2,3,4]
 
                     _params[:layers] = [(r,N)]
                     _params_esn = Dict{Symbol,Any}(
-                        :R_scaling => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
-                        ,:Rin_dens => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
-                        ,:sigma    => [ [1.0 for _ in 1:layer[1]] for layer in _params[:layers]]
-                        ,:sgmds    => [ [tanh for _ in 1:layer[1]] for layer in 1:length(_params[:layers]) ]
-                        ,:alpha    => [ [A for _ in 1:layer[1]] for layer in _params[:layers]]
-                        ,:density  => [ [D for _ in 1:layer[1]] for layer in _params[:layers]]
-                        ,:rho      => [ [R for _ in 1:layer[1]] for layer in _params[:layers]]
+                        :R_scaling => [ [1.0    for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:Rin_dens => [ [1.0    for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:sigma    => [ [1.0    for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:sgmds    => [ [tanh   for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:alpha    => [ [A      for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:density  => [ [D      for _ in 1:layer[1]]    for layer in _params[:layers]]
+                        ,:rho      => [ [R      for _ in 1:layer[1]]    for layer in _params[:layers]]
                     )
 
                     par = Dict(
