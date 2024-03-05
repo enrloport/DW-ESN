@@ -91,7 +91,7 @@ for r in [2,3,4]
 
                     r1=[]
                     tm = @elapsed begin
-                        r1 = do_batch_dwesn(_params_esn,_params, sd)
+                        r1 = do_batch_dwesn(_params_esn,_params)
                     end
                     if _params[:wb]
                         close(_params[:lg])

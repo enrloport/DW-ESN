@@ -90,7 +90,7 @@ for N in [50, 100, 200, 300, 400, 500, 750, 1000, 2000, 3000, 4000, 5000]
 
                 r1=[]
                 tm = @elapsed begin
-                    r1 = do_batch_dwesn(_params_esn,_params, sd)
+                    r1 = do_batch_dwesn(_params_esn,_params)
                 end
                 if _params[:wb]
                     close(_params[:lg])
