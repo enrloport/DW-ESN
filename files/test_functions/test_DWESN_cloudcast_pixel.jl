@@ -1,5 +1,5 @@
 # Function to test an already trained deepwideESN struct
-function __do_test_DWESN_cloudcast!(dwE, args::Dict)
+function __do_test_DWESN_cloudcast_pixel!(dwE, args::Dict)
     test_length = args[:test_length]
 
     classes_Y    = Array{Tuple{Float64,Int,Int}}[]
