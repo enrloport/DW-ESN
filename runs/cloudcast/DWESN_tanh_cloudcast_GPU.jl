@@ -1,4 +1,4 @@
-include("../ESN.jl")
+include("../../ESN.jl")
 
 # DATASET
 dir     = "data/"

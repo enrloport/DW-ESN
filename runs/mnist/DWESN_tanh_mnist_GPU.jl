@@ -1,4 +1,4 @@
-include("../ESN.jl")
+include("../../ESN.jl")
 using MLDatasets
 using CUDA
 CUDA.allowscalar(false)
