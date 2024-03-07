@@ -65,7 +65,7 @@ for r in [2,3,4]
                     # sd = rand(1:10000)
                     Random.seed!(_params[:seed])
 
-                    _params[:layers] = [(1,N)]
+                    _params[:layers] = [(r,N)]
                     _params_esn = Dict{Symbol,Any}(
                         :R_scaling => [ [1.0 for _ in 1:layer[1]]   for layer in _params[:layers]]
                         ,:Rin_dens => [ [1.0 for _ in 1:layer[1]]   for layer in _params[:layers]]
