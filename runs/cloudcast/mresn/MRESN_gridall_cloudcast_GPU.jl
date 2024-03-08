@@ -56,11 +56,11 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , step            = _params[:step]
     )
 
-for r in [2,3,4]
-    for R in [1.0, 2.0, 3.0, 4.0, 5.0]
-        for A in [x/10 for x in 1:9]
-            for D in [x/10 for x in 1:7]
-                for N in [50, 100, 200, 300, 400, 500]
+for R in [0.001, 0.1, 1.5, 3.0]
+    for A in [x/10 for x in 1:9]
+        for D in [x/10 for x in 1:7]
+            for N in [50, 100, 200, 300, 400, 500]
+                for r in [2,3,4]
 
                     # sd = rand(1:10000)
                     Random.seed!(_params[:seed])
