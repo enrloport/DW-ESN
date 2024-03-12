@@ -70,7 +70,7 @@ function do_batch_dwesn(_params_esn, _params)
         Wandb.log(p[:lg], to_log )
     else
         display(to_log)
-        display(confusion_matrix(cls_nms,p[:test_labels], [x[1] for x in dwE.Y]) )
+        if p[:confusion_matrix] display(confusion_matrix(cls_nms,p[:test_labels], [x[1] for x in dwE.Y]) ) end
     end
     return dwE
 end
