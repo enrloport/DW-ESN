@@ -5,29 +5,34 @@ dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
-# files   = ["2017M01.nc","2017M02.nc","2017M03.nc","2017M04.nc","2017M05.nc" ]
-# all     = cat([ ncread(dir*fl, "__xarray_dataarray_variable__") for fl in files ]... , dims=1)
+img = map( x-> x>14 ? 0 : x , all[2065,:,:])'
 
-# u = cc_to_int(_data_o[1,:,:])
-# countmap(u)
-# Images.Gray.(u./10)
+# histogram(reshape(img,1,:)')
+
+Images.Gray.( img./14 )
+img2 = (img./14).*0.4
+img2[30,30] = 1.0
+Images.Gray.( img2 )
+
 
 # PARAMS
-repit = 1
+repit = 50
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => false
+    ,:confusion_matrix  => false
     ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 100
-    ,:train_length      => 5000
-    ,:test_length       => 100
+    ,:initial_transient => 1000
+    ,:train_length      => 50000
+    ,:test_length       => 1
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
     ,:step              => 1
+    ,:data              => all
 )
 
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
@@ -49,7 +54,8 @@ if _params[:wb] using Logging, Wandb end
 
 
 for _ in 1:repit
-    _params[:layers] = [(1,300)]
+    r1=[]
+    _params[:layers] = [(4,500)]
     sd = rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
@@ -57,9 +63,9 @@ for _ in 1:repit
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
-        ,:density  => [rand(Uniform(0.01,0.2),num_e[1] ) for num_e in _params[:layers]]
-        ,:Rin_dens => [rand(Uniform(0.01,0.5),num_e[1] ) for num_e in _params[:layers]]
-        ,:rho      => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
+        ,:density  => [rand(Uniform(0.1,0.3),num_e[1]) for num_e in _params[:layers]]
+        ,:Rin_dens => [rand(Uniform(1.0,1.0),num_e[1]) for num_e in _params[:layers]]
+        ,:rho      => [rand(Uniform(2.0,4.0),num_e[1] ) for num_e in _params[:layers]]
         ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
     )
@@ -87,9 +93,8 @@ for _ in 1:repit
     end
     display(par)
 
-    r1=[]
     tm = @elapsed begin
-        r1 = do_batch_dwesn(_params_esn,_params, sd)
+        r1 = do_batch_dwesn(_params_esn,_params)
     end
     if _params[:wb]
         close(_params[:lg])
