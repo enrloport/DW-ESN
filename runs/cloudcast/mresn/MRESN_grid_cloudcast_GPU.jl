@@ -9,6 +9,7 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
+    ,:confusion_matrix  => true
     ,:wb_logger_name    => "MRESN_grid_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
