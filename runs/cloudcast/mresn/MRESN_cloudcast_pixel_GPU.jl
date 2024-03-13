@@ -6,7 +6,7 @@ file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 # PARAMS
-repit = 50
+repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
@@ -16,7 +16,7 @@ _params = Dict{Symbol,Any}(
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
     ,:train_length      => 50000
-    ,:test_length       => 1
+    ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
     ,:target_pixel      => (30,30)
@@ -53,8 +53,8 @@ for _ in 1:repit
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
-        ,:density  => [rand(Uniform(0.1,0.3),num_e[1]) for num_e in _params[:layers]]
-        ,:Rin_dens => [rand(Uniform(1.0,1.0),num_e[1]) for num_e in _params[:layers]]
+        ,:density  => [rand(Uniform(0.1,0.3),num_e[1] ) for num_e in _params[:layers]]
+        ,:Rin_dens => [[1.0 for _ in 1:num_e[1]]        for num_e in _params[:layers]]
         ,:rho      => [rand(Uniform(2.0,4.0),num_e[1] ) for num_e in _params[:layers]]
         ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
