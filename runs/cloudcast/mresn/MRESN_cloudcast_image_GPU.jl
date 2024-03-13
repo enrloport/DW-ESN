@@ -14,8 +14,8 @@ _params = Dict{Symbol,Any}(
     ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 100
-    ,:train_length      => 5000
+    ,:initial_transient => 1000
+    ,:train_length      => 50000
     ,:test_length       => 1
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_image!
@@ -97,15 +97,19 @@ end
 
 r1.Y
 
-_t = _params[:train_length] + _params[:test_length]
-target = cc_to_int(all[_t,:,:])
-
-# using DelimitedFiles
-# writedlm( "mresn.csv",  r1.Y[1,:,:], ',')
-
-# using CSV, DataFrames
-# r1Y = Matrix(CSV.read("mresn_1000_50000_1.csv", DataFrame, header=false))
-
+using DelimitedFiles
+writedlm( "mresn.csv",  r1.Y[1,:,:], ',')
 
 Images.Gray.(hcat(target, r1.Y[1,:,:])./10)
+
+
+
+# using CSV, DataFrames
+# _t = _params[:train_length] + _params[:test_length]
+# target = cc_to_int(all[_t,:,:])'
+
+# r1Y = Matrix(CSV.read("mresn_1000_50000_1.csv", DataFrame, header=false))'
+# Images.Gray.(hcat(target, r1Y)./10)
+
+
 # EOF
