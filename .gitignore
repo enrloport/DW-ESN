@@ -3,6 +3,8 @@ wandb/
 
 # Files
 *.nc
+*.png
+*.csv
 
 
 
