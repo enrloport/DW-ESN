@@ -55,8 +55,10 @@ function do_batch_dwesn(_params_esn, _params)
         , "R_scalings"      => pe[:R_scaling]
         , "reservoirs"      => sum([x[1] for x in p[:layers]])
         , "nodes" => sum( [ l[1]*l[2] for l in p[:layers] ] )
-        , "alpha" => pe[:alpha][1][1]
-        , "density" => pe[:density][1][1]
+	    , "alpha min" => minimum( vcat( pe[:alpha]...) )
+	    , "alpha max" => maximum( vcat( pe[:alpha]...) )
+	    , "density min" => minimum( vcat( pe[:density]...) )
+	    , "density max" => maximum( vcat( pe[:density]...) )
         , "rho" => pe[:rho][1][1]
         , "sigma" => pe[:sigma][1][1]
     )
