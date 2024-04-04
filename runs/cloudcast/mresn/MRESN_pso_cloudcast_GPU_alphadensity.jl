@@ -21,8 +21,8 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
-    ,:confusion_matrix  => true
-    ,:wb_logger_name    => "MRESN_pso_cloudcast_GPU"
+    ,:confusion_matrix  => false
+    ,:wb_logger_name    => "MRESN_pso_cloudcast_GPU_alphadensity"
     # ,:layers            => [(1,1000)]
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
@@ -67,17 +67,17 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
 
 ############################################################################ PSO ALGORITHM
 function fitness(x)
-    A,D,R,S,r = x[1], x[2], x[3], x[4], x[5]
-    _params[:layers] = [(Integer(floor(r)),250)]
+    a1,a2,d1,d2 = x[1], x[2], x[3], x[4]
+    _params[:layers] = [(5,300)]
 
     _params_esn = Dict{Symbol,Any}(
-        :R_scaling => [ [1.0  for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:Rin_dens => [ [1.0  for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:sgmds    => [ [tanh for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:sigma    => [ [S    for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:alpha    => [ [A    for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:density  => [ [D    for _ in 1:layer[1]] for layer in _params[:layers]]
-        ,:rho      => [ [R    for _ in 1:layer[1]] for layer in _params[:layers]]
+        :R_scaling => [ [1.0      for _ in 1:layer[1]] for layer in _params[:layers]]
+	,:Rin_dens => [ rand(Uniform(d1,d2), layer[1]) for layer in _params[:layers]]
+        ,:sgmds    => [ [tanh     for _ in 1:layer[1]] for layer in _params[:layers]]
+        ,:sigma    => [ [0.5      for _ in 1:layer[1]] for layer in _params[:layers]]
+        ,:alpha    => [ rand(Uniform(a1,a2), layer[1]) for layer in _params[:layers]]
+        ,:density  => [ rand(Uniform(d1,d2), layer[1]) for layer in _params[:layers]]
+        ,:rho      => [ [2.0      for _ in 1:layer[1]] for layer in _params[:layers]]
     )
 
     Random.seed!(_params[:seed])
@@ -100,7 +100,7 @@ pso_dict = Dict(
     ,"max_iter" => 30
 )
 
-for _it in 1:1
+for _it in 1:10
     sd = rand(1:10000)
     Random.seed!(sd)
     pso_dict["Seed"] = sd
@@ -122,9 +122,9 @@ for _it in 1:1
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    # Cota superior e inferior de individuos. alpha, density, rho, sigma, reservoirs
-    lx = [0.01, 0.01, 0.01, 0.001, 2.0  ]'
-    ux = [0.99,  0.7, 10.0, 1.5,   4.999]'
+    # Cota superior e inferior de individuos. alpha min, alpha max, density min, density max
+    lx = [0.2, 0.5, 0.01, 0.25  ]'
+    ux = [0.5, 0.8, 0.25, 0.5    ]'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )
