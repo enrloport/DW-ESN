@@ -6,7 +6,7 @@ file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 # PARAMS
-repit = 1
+repit = 2000
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
@@ -45,7 +45,7 @@ if _params[:wb] using Logging, Wandb end
 
 for _ in 1:repit
     r1=[]
-    _params[:layers] = [(4,300)]
+    _params[:layers] = [(rand([2,3,4,5]),300)]
     sd = rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
@@ -54,8 +54,8 @@ for _ in 1:repit
         :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
         ,:density  => [rand(Uniform(0.1,0.3),num_e[1] ) for num_e in _params[:layers]]
-        ,:Rin_dens => [[1.0 for _ in 1:num_e[1]]        for num_e in _params[:layers]]
-        ,:rho      => [rand(Uniform(2.0,4.0),num_e[1] ) for num_e in _params[:layers]]
+        ,:Rin_dens => [rand(Uniform(0.1,0.5),num_e[1] ) for num_e in _params[:layers]]
+        ,:rho      => [rand(Uniform(1.0,4.0),num_e[1] ) for num_e in _params[:layers]]
         ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
     )
