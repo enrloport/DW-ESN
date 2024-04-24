@@ -31,28 +31,25 @@ function __make_Rout_DWESN_cloudcast!(dwE,args)
         classes_Yt = Dict( k => CuArray(classes_Yt[k]) for k in keys(classes_Yt) )
     end
 
-    cudamatrix = args[:gpu] ? CuArray : Matrix
-    dwE.classes_Routs = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
+    cudamatrix          = args[:gpu] ? CuArray : Matrix
+    dwE.classes_Routs   = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
 end
 
 
 function __do_train_DWESN_cloudcast!(dwE, args)
-    num   = args[:train_length]-args[:initial_transient]
-    flt = vcat(dwE.layers...)
-    dwE.X = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
+    num               = args[:train_length]-args[:initial_transient]
+    flt               = vcat(dwE.layers...)
+    dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
+    reset_function    = (x) -> zeros(x,1)
+
+    if args[:gpu]
+        dwE.X             = CuArray(dwE.X)
+        reset_function    = (x) -> CuArray(zeros(x,1))
+    end
 
     for layer in dwE.layers
         for _esn in layer.esns
-            _esn.x = zeros( _esn.R_size, 1)
-        end
-    end
-
-    if args[:gpu]
-        dwE.X = CuArray(dwE.X)
-        for layer in dwE.layers
-            for _esn in layer.esns
-                _esn.x = CuArray( _esn.x)
-            end
+            _esn.x = reset_function( _esn.R_size)
         end
     end
 
