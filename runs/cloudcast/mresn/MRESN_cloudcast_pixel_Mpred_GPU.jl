@@ -10,7 +10,7 @@ repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => false
-    ,:confusion_matrix  => false
+    ,:confusion_matrix  => true
     ,:wb_logger_name    => "MRESN_cloudcast_pixel_MP_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
@@ -21,7 +21,7 @@ _params = Dict{Symbol,Any}(
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
-    ,:step              => [1,2,3,4]
+    ,:step              => [1]#[1,2,3,4]
     ,:data              => all
 )
 
@@ -34,6 +34,8 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , step            = _params[:step]
     )
 
+_params[:test_labels]
+size(_params[:test_labels])
 
 # u = cc_to_int(_params[:train_data][1,:,:])
 # u2 = cc_to_int(_params[:train_data][2,:,:])
@@ -83,49 +85,16 @@ for _ in 1:repit
     end
     display(par)
 
-    tm = @elapsed begin
+    _params[:total_time] = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
     end
-    p,pe=_params,_params_esn
-    to_log = Dict(
-        "Total time"        => tm
-        ,"Train time"       => p[:train_time]
-        ,"Test time"        => p[:test_time]
-        ,"Error"            => dwE.error
-        ,"Layers"           => p[:layers]
-        , "Sigmoids"        => pe[:sgmds]
-        , "Alphas"          => pe[:alpha]
-        , "Densities"       => pe[:density]
-        , "R_in_densities"  => pe[:Rin_dens]
-        , "Rhos"            => pe[:rho]
-        , "Sigmas"          => pe[:sigma]
-        , "R_scalings"      => pe[:R_scaling]
-        , "reservoirs"      => sum([x[1] for x in p[:layers]])
-        , "nodes" => sum( [ l[1]*l[2] for l in p[:layers] ] )
-	    , "alpha min" => minimum( vcat( pe[:alpha]...) )
-	    , "alpha max" => maximum( vcat( pe[:alpha]...) )
-	    , "density min" => minimum( vcat( pe[:density]...) )
-	    , "density max" => maximum( vcat( pe[:density]...) )
-        , "rho" => pe[:rho][1][1]
-        , "sigma" => pe[:sigma][1][1]
-    )
-    cls_nms = string.(p[:classes])
-    if p[:wb]
-        if p[:confusion_matrix]
-            to_log["conf_mat"] = Wandb.wandb.plot.confusion_matrix(
-                y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
-            )
-        end
-        Wandb.log(p[:lg], to_log )
-    else
-        display(to_log)
-        if p[:confusion_matrix] display(confusion_matrix(cls_nms,p[:test_labels], [x[1] for x in dwE.Y]) ) end
-    end
+    full_log(_params, _params_esn, dwE)
+
     if _params[:wb]
         close(_params[:lg])
     end
 
-    printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
+    printime = _params[:gpu] ? "Time GPU: " * string(_params[:total_time]) :  "Time CPU: " * string(_params[:total_time]) 
     println("Error: ", dwE.error, "\n", printime  )
 
 end
