@@ -20,19 +20,22 @@ function __make_Rout_DWESN_cloudcast!(dwE,args)
     classes       = args[:classes]
     classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
 
-    for t in 1:args[:train_length]-args[:initial_transient]
-        lt = args[:train_labels][t+args[:initial_transient]]
-        for c in classes
-            y = lt == c ? 1.0 : 0.0
-            classes_Yt[c][t] = y
+    for stp in args[:step]
+        for t in 1:args[:train_length]-args[:initial_transient]
+            lt = args[:train_labels][stp][t+args[:initial_transient]]
+            for c in classes
+                y = lt == c ? 1.0 : 0.0
+                classes_Yt[c][t] = y
+            end
         end
-    end
-    if args[:gpu]
-        classes_Yt = Dict( k => CuArray(classes_Yt[k]) for k in keys(classes_Yt) )
+        if args[:gpu]
+            classes_Yt = Dict( k => CuArray(classes_Yt[k]) for k in keys(classes_Yt) )
+        end
+
+        cudamatrix          = args[:gpu] ? CuArray : Matrix
+        dwE.classes_Routs[stp]   = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
     end
 
-    cudamatrix          = args[:gpu] ? CuArray : Matrix
-    dwE.classes_Routs   = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
 end
 
 
