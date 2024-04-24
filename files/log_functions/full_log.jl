@@ -32,6 +32,19 @@ function full_log(params,params_esn,dwE)
         Wandb.log(p[:lg], to_log )
     else
         display(to_log)
-        if p[:confusion_matrix] display(confusion_matrix(cls_nms,p[:test_labels], [x[1] for x in dwE.Y]) ) end
+        if p[:confusion_matrix]
+
+            println(typeof(p[:step]))
+            if typeof(p[:step]) == Vector
+
+                println(typeof(p[:test_labels]))
+                println(typeof([x[1] for x in dwE.Y]))
+                for stp in p[:step]
+                    display(confusion_matrix(cls_nms, p[:test_labels][stp], [x[1] for x in dwE.Y[stp]]) )
+                end
+            else
+                display(confusion_matrix(cls_nms, p[:test_labels], [x[1] for x in dwE.Y]) )
+            end
+        end
     end
 end
