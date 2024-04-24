@@ -1,17 +1,3 @@
-function _step_mnist(deepE, data,t,f)
-    for _esn in deepE.layers[1].esns
-        a = data[:,:,t]
-        __update(_esn, a, f )
-    end
-
-    for i in 2:length(deepE.layers)
-        for _esn in deepE.layers[i].esns
-            v = vcat([_e.x for _e in deepE.layers[i-1].esns ]...)
-            __update(_esn, v , f )
-        end
-    end
-end
-
 function __fill_X_DWESN_mnist!(deepE, args::Dict )
 
     f = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
