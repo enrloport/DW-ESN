@@ -38,6 +38,7 @@ include.( filter(contains(r".jl$"), readdir("./files/cloudcast_functions"; join=
 include.( filter(contains(r".jl$"), readdir("./files/log_functions"; join=true)))
 include.( filter(contains(r".jl$"), readdir("./files/reservoir_generators"; join=true)))
 include.( filter(contains(r".jl$"), readdir("./files/sigmoid_functions"; join=true)))
+include.( filter(contains(r".jl$"), readdir("./files/step_functions"; join=true)))
 include.( filter(contains(r".jl$"), readdir("./files/test_functions"; join=true)))
 include.( filter(contains(r".jl$"), readdir("./files/train_functions"; join=true)))
 include.( filter(contains(r".jl$"), readdir("./files/update_functions/"; join=true)))
