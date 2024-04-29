@@ -6,22 +6,22 @@ file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 # PARAMS
-repit = 40
+repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => true
-    ,:confusion_matrix  => true
-    ,:wb_logger_name    => "MRESN_cloudcast_pixel_MP_GPU"
+    ,:wb                => false
+    ,:confusion_matrix  => false
+    ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 1000
-    ,:train_length      => 50000
-    ,:test_length       => 1000
+    ,:initial_transient => 10
+    ,:train_length      => 50
+    ,:test_length       => 1
     ,:train_f           => __do_train_DWESN_cloudcast!
-    ,:test_f            => __do_test_DWESN_cloudcast_pixel!
+    ,:test_f            => __do_test_DWESN_cloudcast_image!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
-    ,:steps             => [1,2,3,4]
+    ,:steps             => [1]
     ,:data              => all
 )
 
@@ -34,8 +34,6 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , step            = _params[:steps]
     )
 
-_params[:test_labels]
-size(_params[:test_labels])
 
 # u = cc_to_int(_params[:train_data][1,:,:])
 # u2 = cc_to_int(_params[:train_data][2,:,:])
@@ -45,9 +43,9 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
+dwE=[]
 for _ in 1:repit
-    dwE=[]
-    _params[:layers] = [(3,300)]
+    _params[:layers] = [(4,300)]
     sd = rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
@@ -55,9 +53,9 @@ for _ in 1:repit
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
-        ,:density  => [rand(Uniform(0.1,0.3),num_e[1] ) for num_e in _params[:layers]]
-        ,:Rin_dens => [rand(Uniform(0.1,0.5),num_e[1] ) for num_e in _params[:layers]]
-        ,:rho      => [rand(Uniform(1.0,4.0),num_e[1] ) for num_e in _params[:layers]]
+        ,:density  => [rand(Uniform(0.01,0.2),num_e[1]) for num_e in _params[:layers]]
+        ,:Rin_dens => [rand(Uniform(0.01,0.5),num_e[1]) for num_e in _params[:layers]]
+        ,:rho      => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
         ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
     )
@@ -95,8 +93,25 @@ for _ in 1:repit
     end
 
     printime = _params[:gpu] ? "Time GPU: " * string(_params[:total_time]) :  "Time CPU: " * string(_params[:total_time]) 
-    println("Error: ", dwE.error, "\n", printime  )
+    # println("Error: ", dwE.error, "\n", printime  )
 
 end
+
+dwE.Y
+
+using DelimitedFiles
+writedlm( "mresn.csv",  dwE.Y[1,:,:], ',')
+
+Images.Gray.(hcat(target, dwE.Y[1,:,:])./10)
+
+
+
+# using CSV, DataFrames
+# _t = _params[:train_length] + _params[:test_length]
+# target = cc_to_int(all[_t,:,:])'
+
+# dwEY = Matrix(CSV.read("mresn_1000_50000_1.csv", DataFrame, header=false))'
+# Images.Gray.(hcat(target, dwEY)./10)
+
 
 # EOF
