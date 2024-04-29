@@ -25,25 +25,19 @@ function full_log(params,params_esn,dwE)
     cls_nms = string.(p[:classes])
     if p[:wb]
         if p[:confusion_matrix]
-            to_log["conf_mat"] = Wandb.wandb.plot.confusion_matrix(
-                y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
-            )
+            for stp in p[:steps]
+                to_log["conf_mat_"*string(stp)] = Wandb.wandb.plot.confusion_matrix(
+                    y_true = p[:test_labels][stp], preds = [x[1] for x in dwE.Y[stp]], class_names = cls_nms
+                    # y_true = p[:test_labels][1:p[:test_length]], preds = [x[1] for x in dwE.Y], class_names = cls_nms
+                )
+            end
         end
         Wandb.log(p[:lg], to_log )
     else
         display(to_log)
         if p[:confusion_matrix]
-
-            println(typeof(p[:step]))
-            if typeof(p[:step]) == Vector
-
-                println(typeof(p[:test_labels]))
-                println(typeof([x[1] for x in dwE.Y]))
-                for stp in p[:step]
-                    display(confusion_matrix(cls_nms, p[:test_labels][stp], [x[1] for x in dwE.Y[stp]]) )
-                end
-            else
-                display(confusion_matrix(cls_nms, p[:test_labels], [x[1] for x in dwE.Y]) )
+            for stp in p[:steps]
+                display(confusion_matrix(cls_nms, p[:test_labels][stp], [x[1] for x in dwE.Y[stp]]) )
             end
         end
     end
