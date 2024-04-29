@@ -18,9 +18,10 @@ end
 function __make_Rout_DWESN_cloudcast!(dwE,args)
     X             = dwE.X
     classes       = args[:classes]
-    classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
+    # classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
 
-    for stp in args[:step]
+    for stp in args[:steps]
+        classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
         for t in 1:args[:train_length]-args[:initial_transient]
             lt = args[:train_labels][stp][t+args[:initial_transient]]
             for c in classes
