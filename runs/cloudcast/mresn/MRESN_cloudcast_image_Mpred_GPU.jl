@@ -14,14 +14,14 @@ _params = Dict{Symbol,Any}(
     ,:wb_logger_name    => "DWESN_tanh_cloudcast_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 10
-    ,:train_length      => 50
+    ,:initial_transient => 1000
+    ,:train_length      => 50000
     ,:test_length       => 1
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_image!
     ,:target_pixel      => (30,30)
     ,:radius            => 3
-    ,:steps             => [1]
+    ,:steps             => [1,2,3,4]
     ,:data              => all
 )
 
@@ -100,15 +100,16 @@ end
 dwE.Y
 
 using DelimitedFiles
-writedlm( "mresn.csv",  dwE.Y[1,:,:], ',')
 
-Images.Gray.(hcat(target, dwE.Y[1,:,:])./10)
+
+_t = _params[:train_length] + _params[:test_length]
+for h in _params[:steps]
+    writedlm( "mresn_cloudcast_image_multipred__"*string(_t)*"+"*string(h)*".csv",  dwE.Y[h][1,:,:], ',')
+end
 
 
 
 # using CSV, DataFrames
-# _t = _params[:train_length] + _params[:test_length]
-# target = cc_to_int(all[_t,:,:])'
 
 # dwEY = Matrix(CSV.read("mresn_1000_50000_1.csv", DataFrame, header=false))'
 # Images.Gray.(hcat(target, dwEY)./10)
