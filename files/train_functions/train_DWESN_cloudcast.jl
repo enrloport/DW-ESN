@@ -43,7 +43,8 @@ end
 function __do_train_DWESN_cloudcast!(dwE, args)
     num               = args[:train_length]-args[:initial_transient]
     flt               = vcat(dwE.layers...)
-    dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
+    # dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
+    dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + args[:input_size] + 1, num)
     reset_function    = (x) -> zeros(x,1)
 
     if args[:gpu]
