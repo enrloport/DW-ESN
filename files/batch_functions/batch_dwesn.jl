@@ -2,7 +2,8 @@
 function do_batch_dwesn(_params_esn, _params)
 
     p,pe  = _params, _params_esn
-    im_sz = (p[:radius]*2 + 1)^2
+    # im_sz = (p[:radius]*2 + 1)^2
+    im_sz = p[:input_size]
 
     layers = []
     layer1 = layerESN( esns = [
