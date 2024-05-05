@@ -12,37 +12,67 @@ _hum    = ncgetatt(dir*file, "global", "Humidity")
 _windS  = ncgetatt(dir*file, "global", "Wind Speed")
 _press  = ncgetatt(dir*file, "global", "Pressure")
 
+minimum(_windD)
+maximum(_windD)
+
+minimum(_hum)
+maximum(_hum)
+
+minimum(_windS)
+maximum(_windS)
+
+minimum(_press)
+maximum(_press)
+
+maxi, len = 0,length(_hum) 
+for i in 1:len
+    if isnan(_hum[i])
+        maxi = i-1
+        println(i)
+        break
+    end
+end
+
+_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./100, _windS[1:maxi]./100, _press[1:maxi]./1013
 
 
-# PARAMS
-repit = 2000
+
+function split_data_newcastle(imgs, hum, windS, press, steps, tr_len, te_len)
+
+    d = reshape(imgs,:,9)
+    tar= d[:,5]
+    ext= hcat(hum,windS,press)
+    aux = hcat(d,ext)
+    
+    tr_x = aux[1:tr_len, :]
+    te_x = aux[tr_len+1:tr_len+te_len,:]
+    
+    tr_y = [cc_to_int(tar[1+step:tr_len+step]) for step in steps]
+    te_y = [cc_to_int(tar[tr_len+1+step:tr_len+te_len+step]) for step in steps]
+
+    return tr_x, tr_y, te_x, te_y
+end
+
+repit = 1
 _params = Dict{Symbol,Any}(
-     :gpu               => true
-    ,:wb                => true
+     :gpu               => false
+    ,:wb                => false
     ,:confusion_matrix  => true
     ,:wb_logger_name    => "MRESN_newcastle_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 50000
+    ,:train_length      => 15000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (30,30)
-    ,:radius            => 3
-    ,:step              => 1
+    ,:steps             => [1]
     ,:data              => all
 )
 
-_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
-    data              = all
-    , train_length    = _params[:train_length]
-    , test_length     = _params[:test_length]
-    , target_pixel    = _params[:target_pixel]
-    , radius          = _params[:radius]
-    , step            = _params[:step]
-    )
+_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_newcastle(_imgs, _hum, _windS, _press, _params[:steps][1], _params[:train_length], _params[:test_length])
 
+_params[:input_size] = size(_params[:train_data],2)
 
 # u = cc_to_int(_params[:train_data][1,:,:])
 # u2 = cc_to_int(_params[:train_data][2,:,:])
@@ -75,8 +105,6 @@ for _ in 1:repit
         , "Layers"              => _params[:layers]
         , "Train length"        => _params[:train_length]
         , "Test length"         => _params[:test_length]
-        , "Target pixel"        => _params[:target_pixel]
-        , "Radius"              => _params[:radius]
         , "Initial transient"   => _params[:initial_transient]
         , "Sigmoids"            => _params_esn[:sgmds]
         , "Alphas"              => _params_esn[:alpha]
