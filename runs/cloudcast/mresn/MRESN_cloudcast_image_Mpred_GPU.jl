@@ -43,7 +43,7 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
-dwE=[]
+global dwE=[]
 for _ in 1:repit
     _params[:layers] = [(4,300)]
     sd = rand(1:10000)
@@ -84,7 +84,7 @@ for _ in 1:repit
     display(par)
 
     _params[:total_time] = @elapsed begin
-        dwE = do_batch_dwesn(_params_esn,_params)
+        global dwE = do_batch_dwesn(_params_esn,_params)
     end
     full_log(_params, _params_esn, dwE)
 
