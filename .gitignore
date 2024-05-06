@@ -5,6 +5,7 @@ wandb/
 *.nc
 *.png
 *.csv
+*.zip
 nohup.out
 csv_reader.jl
 
