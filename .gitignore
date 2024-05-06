@@ -6,6 +6,7 @@ wandb/
 *.png
 *.csv
 nohup.out
+csv_reader.jl
 
 # Backup Files
 *BU.jl
