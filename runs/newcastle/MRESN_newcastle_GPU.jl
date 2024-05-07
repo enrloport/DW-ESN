@@ -12,22 +12,22 @@ _hum    = ncgetatt(dir*file, "global", "Humidity")
 _windS  = ncgetatt(dir*file, "global", "Wind Speed")
 _press  = ncgetatt(dir*file, "global", "Pressure")
 
-minimum(_windD)
-maximum(_windD)
+# minimum(_windD)
+# maximum(_windD)
 
-minimum(_hum)
-maximum(_hum)
+# minimum(_hum)
+# maximum(_hum)
 
-minimum(_windS)
-maximum(_windS)
+# minimum(_windS)
+# maximum(_windS)
 
-minimum(_press)
-maximum(_press)
+# minimum(_press)
+# maximum(_press)
 
-maxi, len = 0,length(_hum) 
+global maxi, len = 0,length(_hum) 
 for i in 1:len
     if isnan(_hum[i])
-        maxi = i-1
+        global maxi = i-1
         println(i)
         break
     end
@@ -53,10 +53,10 @@ function split_data_newcastle(imgs, hum, windS, press, steps, tr_len, te_len)
     return tr_x, tr_y, te_x, te_y
 end
 
-repit = 1
+repit = 1000
 _params = Dict{Symbol,Any}(
-     :gpu               => false
-    ,:wb                => false
+     :gpu               => true
+    ,:wb                => true
     ,:confusion_matrix  => true
     ,:wb_logger_name    => "MRESN_newcastle_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
@@ -83,7 +83,7 @@ if _params[:wb] using Logging, Wandb end
 
 
 for _ in 1:repit
-    r1=[]
+    dwE=[]
     _params[:layers] = [(rand([2,3,4,5]),300)]
     sd = rand(1:10000)
     Random.seed!(sd)
@@ -121,14 +121,17 @@ for _ in 1:repit
     display(par)
 
     tm = @elapsed begin
-        r1 = do_batch_dwesn(_params_esn,_params)
+        dwE = do_batch_dwesn(_params_esn,_params)
     end
+    dwE.error = dwE.error[1]
+    _params[:total_time] = tm
+    full_log(_params,_params_esn,dwE)
     if _params[:wb]
         close(_params[:lg])
     end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    println("Error: ", r1.error, "\n", printime  )
+    println("Error: ", dwE.error, "\n", printime  )
 
 end
 
