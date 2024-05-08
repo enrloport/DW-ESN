@@ -5,23 +5,30 @@ dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
+# fir = cc_to_int(all[1,:,:])./20
+# Images.Gray.(fir)
+# sec = copy(fir)
+# sec[23,47] = 1.0
+# Images.Gray.(sec')
+
+
 # PARAMS
-repit = 2000
+repit = 5000
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => true
-    ,:wb_logger_name    => "MRESN_cloudcast_pixel_GPU"
+    ,:wb_logger_name    => "MRESN_cloudcast_pixel_nc_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 50000
+    ,:train_length      => 15000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (30,30)
+    ,:target_pixel      => (23,47)
     ,:radius            => 3
-    ,:step              => 1
+    ,:steps             => [1]
     ,:data              => all
 )
 
@@ -31,9 +38,9 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , test_length     = _params[:test_length]
     , target_pixel    = _params[:target_pixel]
     , radius          = _params[:radius]
-    , step            = _params[:step]
+    , step            = _params[:steps]
     )
-
+_params[:input_size] = ((_params[:radius]*2)+1)^2
 
 # u = cc_to_int(_params[:train_data][1,:,:])
 # u2 = cc_to_int(_params[:train_data][2,:,:])
@@ -44,7 +51,7 @@ if _params[:wb] using Logging, Wandb end
 
 
 for _ in 1:repit
-    r1=[]
+    dwE=[]
     _params[:layers] = [(rand([2,3,4,5]),300)]
     sd = rand(1:10000)
     Random.seed!(sd)
@@ -84,14 +91,18 @@ for _ in 1:repit
     display(par)
 
     tm = @elapsed begin
-        r1 = do_batch_dwesn(_params_esn,_params)
+        dwE = do_batch_dwesn(_params_esn,_params)
     end
+    dwE.error = dwE.error[1]
+    _params[:total_time] = tm
+    full_log(_params,_params_esn,dwE)
+
     if _params[:wb]
         close(_params[:lg])
     end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    println("Error: ", r1.error, "\n", printime  )
+    println("Error: ", dwE.error, "\n", printime  )
 
 end
 
