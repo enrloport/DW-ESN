@@ -4,7 +4,6 @@ function full_log(params,params_esn,dwE)
         "Total time"        => p[:total_time]
         ,"Train time"       => p[:train_time]
         ,"Test time"        => p[:test_time]
-        ,"Error"            => dwE.error
         ,"Layers"           => p[:layers]
         , "Sigmoids"        => pe[:sgmds]
         , "Alphas"          => pe[:alpha]
@@ -22,6 +21,8 @@ function full_log(params,params_esn,dwE)
         , "rho" => pe[:rho][1][1]
         , "sigma" => pe[:sigma][1][1]
     )
+    err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in params[:steps] )
+    merge!(to_log,err_dict)
     cls_nms = string.(p[:classes])
     if p[:wb]
         if p[:confusion_matrix]
