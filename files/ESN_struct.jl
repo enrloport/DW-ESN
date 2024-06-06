@@ -31,14 +31,8 @@ Base.@kwdef mutable struct DWESN
     beta            ::Float64       = 1.0e-8
     wrong_class     ::Any           = []
     classes_Y       ::Any           = []
-    Y_target        ::Array{Any}    = []
+    Y_target        ::Any           = []
     Y               ::Any           = []
-    error           ::Union{Array{Float64},Float64} = 1.0
+    error           ::Dict{Any,Any} = Dict()
     classes_Routs   ::Dict{Int16,Dict{Int16,Union{Array{Float64},CuArray}}} = Dict()
-    
-    # error           ::Float64       = 1.0
-    # wrong_class     ::Array{Any}    = []
-    # classes_Y       ::Array{Any}    = []
-    # Y               ::Array{Any}    = []
-    # classes_Routs   ::Dict{Int16,Union{Array{Float64},CuArray}} = Dict()
 end
