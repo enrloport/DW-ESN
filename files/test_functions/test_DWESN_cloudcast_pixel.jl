@@ -33,7 +33,6 @@ function __do_test_DWESN_cloudcast_pixel!(dwE, args::Dict)
     dwE.wrong_class= wrong_class
     dwE.classes_Y  = classes_Y
     dwE.Y_target   = args[:test_labels]
-    # dwE.error      = length(wrong_class[1]) / length(classes_Y[1])
-    dwE.error      = [length(wrong_class[stp]) / length(classes_Y[stp]) for stp in args[:steps]]
+    dwE.error      = Dict( stp => length(wrong_class[stp]) / length(classes_Y[stp]) for stp in args[:steps])
 
 end
