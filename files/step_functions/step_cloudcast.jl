@@ -1,5 +1,5 @@
 function _step_cloudcast(dwE, data,t,f)
-    ia = dwE.input_to_all ? f(data[t,:,:]) : []
+    ia = dwE.input_to_all ? f(data[t,:,:]) : f(zeros(0))
     for _esn in dwE.layers[1].esns
         a = data[t,:,:]
         __update(_esn, a, f )
