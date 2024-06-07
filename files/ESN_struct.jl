@@ -24,8 +24,9 @@ end
 
 Base.@kwdef mutable struct DWESN
     layers          ::Vector{layerESN}
-    train_function  ::Function      = __do_train_DWESN!
-    test_function   ::Function      = __do_test_DWESN!
+    input_to_all    ::Bool          = false
+    train_function  ::Function      = __do_train_DWESN_cloudcast!
+    test_function   ::Function      = __do_test_DWESN_cloudcast_pixel!
     X               ::Mtx           = zeros(1,1)
     R_out           ::Mtx           = zeros(1,1)
     beta            ::Float64       = 1.0e-8
