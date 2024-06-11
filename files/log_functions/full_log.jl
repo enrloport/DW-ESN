@@ -13,7 +13,7 @@ function full_log(params,params_esn,dwE)
         , "Sigmas"          => pe[:sigma]
         , "R_scalings"      => pe[:R_scaling]
         , "reservoirs"      => sum([x[1] for x in p[:layers]])
-        , "nodes" => sum( [ l[1]*l[2] for l in p[:layers] ] )
+        , "nodes" => sum( [ sum(l) for l in p[:layers] ] )
 	    , "alpha min" => minimum( vcat( pe[:alpha]...) )
 	    , "alpha max" => maximum( vcat( pe[:alpha]...) )
 	    , "density min" => minimum( vcat( pe[:density]...) )
