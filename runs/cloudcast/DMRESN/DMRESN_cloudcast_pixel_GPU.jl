@@ -5,23 +5,19 @@ dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
-layers = [ [200,300], [100,100], ones(3).*50 ]
-num_layers = length(layers)
-res_per_layer = [length(l) for l in layers] 
-
 # PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => false
     ,:confusion_matrix  => true
-    ,:input_to_all      => false
+    ,:input_to_all      => true
     ,:wb_logger_name    => "DMRESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 4900
-    ,:test_length       => 100
+    ,:train_length      => 49000
+    ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
     ,:target_pixel      => (30,30)
@@ -44,17 +40,24 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
+dwE=[]
 for _ in 1:repit
     dwE=[]
-    _params[:layers] = [(200,500), (200,300), (50,100)]
-    connections = [[]]
-    sd = rand(1:10000)
+    _params[:layers] = [[200,500], [50,200,300], [50,100]]
+    _params[:connections] = Dict(
+         3 => [(2,0.3)]
+        ,4 => [(1,1.0)]
+        ,5 => [(1,1.0)]
+        ,6 => [(4,1.5),(5,1.5)]
+        ,7 => [(1,1.0),(2,1.0),(3,1.0)]
+    )
+    sd = 42#rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
     _params_esn = Dict{Symbol,Any}(
         :R_scaling => [rand(Uniform(0.5,1.5),length(layer) ) for layer in _params[:layers]]
-        ,:alpha    => [rand(Uniform(0.3,0.7),length(layer) ) for layer in _params[:layers] ]
+        ,:alpha    => [rand(Uniform(0.3,0.7),length(layer) ) for layer in _params[:layers]]
         ,:density  => [rand(Uniform(0.1,0.3),length(layer) ) for layer in _params[:layers]]
         ,:Rin_dens => [rand(Uniform(0.1,0.5),length(layer) ) for layer in _params[:layers]]
         ,:rho      => [rand(Uniform(1.0,4.0),length(layer) ) for layer in _params[:layers]]
@@ -98,6 +101,31 @@ for _ in 1:repit
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
     println("Error: ", dwE.error, "\n", printime  )
 
+    for l in 1:length(dwE.layers)
+        for r in dwE.layers[l].esns
+            println("Layer: ",l, ", id: ", r.id)
+        end
+    end
 end
 
 # EOF
+
+dwE.esns
+
+dwE.connections
+
+pc = _params[:connections]
+
+
+_params[:connections] = Dict(
+         3 => [(2,1.0)]
+        ,4 => [(1,1.0)]
+        ,5 => [(1,1.0)]
+        ,6 => [(4,1.0),(5,1.0)]
+        ,7 => [(1,1.0),(2,1.0),(3,1.0)]
+    )
+l_r = l_r = vcat(_params[:layers]...)
+szl = length(l_r)
+
+[ l_r[i] for i in 1:szl if i in getfield.(_params[:connections][6],1) ]
+
