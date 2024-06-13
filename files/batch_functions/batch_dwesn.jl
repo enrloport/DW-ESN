@@ -6,20 +6,27 @@ function do_batch_dwesn(_params_esn, _params)
 
     layers = []
     layer1 = layerESN( esns = [
-                ESN( 
-                     R      = new_R(p[:layers][1][i], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
+                ESN( id     = i
+                    ,R      = new_R(p[:layers][1][i], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
                     ,R_in   = new_R_in(p[:layers][1][i], im_sz , sigma = pe[:sigma][1][i] ,gpu=p[:gpu], density=pe[:Rin_dens][1][i])
                     ,R_scaling = pe[:R_scaling][1][i], alpha = pe[:alpha][1][i], rho = pe[:rho][1][i], sigma = pe[:sigma][1][i], sgmd = pe[:sgmds][1][i]
                 ) for i in 1:length(p[:layers][1])
             ])
     push!(layers,layer1)
 
+    id_counter = 0
+    input_sz = p[:input_to_all] ? im_sz : 0
+
+    l_r = vcat(p[:layers]...)
+    szl = length(l_r)
+    fsz = (id) -> sum( [ l_r[i] for i in 1:szl if i in getfield.(p[:connections][id], 1) ] ) + input_sz
+
     for l in 2:length(p[:layers])
-        input_sz = p[:input_to_all] ? layers[l-1].nodes + im_sz : layers[l-1].nodes
+        id_counter += length(p[:layers][l-1])
         layer = layerESN( esns = [
-            ESN(
-                 R      = new_R(p[:layers][l][i], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
-                ,R_in   = new_R_in(p[:layers][l][i], input_sz, sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
+            ESN( id     = id_counter + i
+                ,R      = new_R(p[:layers][l][i], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
+                ,R_in   = new_R_in(p[:layers][l][i], fsz(id_counter + i) , sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
                 ,R_scaling = pe[:R_scaling][l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
             ) for i in 1:length(p[:layers][l])
         ])
@@ -32,6 +39,10 @@ function do_batch_dwesn(_params_esn, _params)
         ,train_function = p[:train_f]
         ,test_function  = p[:test_f]
         ,input_to_all   = p[:input_to_all]
+        )
+    dwE.connections = Dict(
+        k => [(dwE.esns[cn[1]],cn[2]) for cn in p[:connections][k] ]
+        for k in keys(p[:connections])
         )
     tm_train = @elapsed begin
         dwE.train_function(dwE,p)
