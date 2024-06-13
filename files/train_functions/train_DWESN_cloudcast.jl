@@ -18,7 +18,6 @@ end
 function __make_Rout_DWESN_cloudcast!(dwE,args)
     X             = dwE.X
     classes       = args[:classes]
-    # classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
 
     for stp in args[:steps]
         classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
@@ -43,7 +42,6 @@ end
 function __do_train_DWESN_cloudcast!(dwE, args)
     num               = args[:train_length]-args[:initial_transient]
     flt               = vcat(dwE.layers...)
-    # dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + (args[:radius]*2+1)^2 + 1, num)
     dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + args[:input_size] + 1, num)
     reset_function    = (x) -> zeros(x,1)
 
