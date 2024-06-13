@@ -1,4 +1,5 @@
 Base.@kwdef mutable struct ESN
+    id        ::Int     = 0
     R         ::Mtx     = zeros(1,1)
     R_in      ::Mtx     = zeros(1,1)
     R_fdb     ::Mtx     = zeros(1,1)
@@ -36,4 +37,6 @@ Base.@kwdef mutable struct DWESN
     Y               ::Any           = []
     error           ::Dict{Any,Any} = Dict()
     classes_Routs   ::Dict{Int16,Dict{Int16,Union{Array{Float64},CuArray}}} = Dict()
+    esns            ::Dict{Int,Any} = Dict(_esn.id => _esn for l in layers for _esn in l.esns)
+    connections     ::Dict{Int,Any} = Dict()
 end
