@@ -7,7 +7,8 @@ function _step_cloudcast(dwE, data,t,f)
 
     for i in 2:length(dwE.layers)
         for _esn in dwE.layers[i].esns
-            v = vcat([_e.x for _e in dwE.layers[i-1].esns ]..., ia)
+            v = vcat([cn[1].x .* cn[2] for cn in dwE.connections[_esn.id] ]..., ia)
+            # v = vcat([_e.x for _e in dwE.layers[i-1].esns ]..., ia)
             __update(_esn, v , f )
         end
     end
