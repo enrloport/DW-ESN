@@ -6,12 +6,12 @@ file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 # PARAMS
-repit = 1
+repit = 100
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => false
-    ,:confusion_matrix  => true
-    ,:input_to_all      => true
+    ,:wb                => true
+    ,:confusion_matrix  => false
+    ,:input_to_all      => false
     ,:wb_logger_name    => "DMRESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
