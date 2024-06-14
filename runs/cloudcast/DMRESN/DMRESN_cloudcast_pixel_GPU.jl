@@ -43,15 +43,13 @@ if _params[:wb] using Logging, Wandb end
 dwE=[]
 for _ in 1:repit
     dwE=[]
-    _params[:layers] = [[200,500], [50,200,300], [50,100]]
+    _params[:layers] = [[300,300,300], [300,300,300]]
     _params[:connections] = Dict(
-         3 => [(2,0.3)]
-        ,4 => [(1,1.0)]
-        ,5 => [(1,1.0)]
-        ,6 => [(4,1.5),(5,1.5)]
-        ,7 => [(1,1.0),(2,1.0),(3,1.0)]
+         4 => [(1,1.0)]
+        ,5 => [(2,1.0)]
+        ,6 => [(3,1.0)]
     )
-    sd = 42#rand(1:10000)
+    sd = rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
@@ -110,22 +108,4 @@ end
 
 # EOF
 
-dwE.esns
-
-dwE.connections
-
-pc = _params[:connections]
-
-
-_params[:connections] = Dict(
-         3 => [(2,1.0)]
-        ,4 => [(1,1.0)]
-        ,5 => [(1,1.0)]
-        ,6 => [(4,1.0),(5,1.0)]
-        ,7 => [(1,1.0),(2,1.0),(3,1.0)]
-    )
-l_r = l_r = vcat(_params[:layers]...)
-szl = length(l_r)
-
-[ l_r[i] for i in 1:szl if i in getfield.(_params[:connections][6],1) ]
 
