@@ -6,10 +6,10 @@ file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
 # PARAMS
-repit = 100
+repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => true
+    ,:wb                => false
     ,:confusion_matrix  => false
     ,:input_to_all      => false
     ,:wb_logger_name    => "DMRESN_cloudcast_pixel_H1to4-100_GPU"
@@ -43,13 +43,18 @@ if _params[:wb] using Logging, Wandb end
 dwE=[]
 for _ in 1:repit
     dwE=[]
-    _params[:layers] = [[300,300,300], [300,300,300]]
+    _params[:layers] = [ [200,200],[200,200],[500]]
     _params[:connections] = Dict(
-         4 => [(1,1.0)]
-        ,5 => [(2,1.0)]
-        ,6 => [(3,1.0)]
+        #  1 => [(3,1.0)]
+        # ,2 => [(4,1.0)]
+        3 => [(1,1.0)]
+        ,4 => [(2,1.0)]
+        ,5 => [(1,1.0),(2,1.0),(3,1.0),(4,1.0)]
     )
-    sd = rand(1:10000)
+    _params[:active_inputs] = [1,2]
+    _params[:active_outputs]= [5]
+
+    sd = 42 #rand(1:10000)
     Random.seed!(sd)
     # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
