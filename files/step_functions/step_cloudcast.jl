@@ -1,15 +1,11 @@
 function _step_cloudcast(dwE, data,t,f)
-    ia = dwE.input_to_all ? f(data[t,:,:]) : f(zeros(0))
-    for _esn in dwE.layers[1].esns
-        a = data[t,:,:]
-        __update(_esn, a, f )
-    end
-
-    for i in 2:length(dwE.layers)
-        for _esn in dwE.layers[i].esns
-            v = vcat([cn[1].x .* cn[2] for cn in dwE.connections[_esn.id] ]..., ia)
-            # v = vcat([_e.x for _e in dwE.layers[i-1].esns ]..., ia)
+    u = data[t,:,:]
+    for layer in dwE.layers
+        for _esn in layer.esns
+            inpt = _esn.input_active ? f(u) : f(zeros(0))
+            conns = _esn.id in keys(dwE.connections) ? [cn[1].x .* cn[2] for cn in dwE.connections[_esn.id] ] : []
+            v = vcat(conns..., inpt)
             __update(_esn, v , f )
         end
-    end
+    end    
 end

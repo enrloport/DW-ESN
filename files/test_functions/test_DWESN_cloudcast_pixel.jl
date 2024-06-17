@@ -8,7 +8,7 @@ function __do_test_DWESN_cloudcast_pixel!(dwE, args::Dict)
 
     for t in 1:test_length
         _step_cloudcast(dwE, args[:test_data], t, f)
-        x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns]...  , f([1]) )
+        x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
         pairs   = Dict( stp => [] for stp in args[:steps])
 
         for stp in args[:steps]

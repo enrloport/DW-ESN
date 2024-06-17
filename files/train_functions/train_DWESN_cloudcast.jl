@@ -10,7 +10,7 @@ function __fill_X_DWESN_cloudcast!(dwE, args::Dict )
         t_in = t - args[:initial_transient]
         _step_cloudcast(dwE, args[:train_data], t, f)
 
-        dwE.X[:,t_in] = vcat(f(args[:train_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns]...  , f([1]) )
+        dwE.X[:,t_in] = vcat(f(args[:train_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
     end
 end
 
@@ -42,7 +42,7 @@ end
 function __do_train_DWESN_cloudcast!(dwE, args)
     num               = args[:train_length]-args[:initial_transient]
     flt               = vcat(dwE.layers...)
-    dwE.X             = zeros( sum([layer.nodes for layer in flt ]) + args[:input_size] + 1, num)
+    dwE.X             = zeros( dwE.output_size + args[:input_size] + 1, num)
     reset_function    = (x) -> zeros(x,1)
 
     if args[:gpu]
