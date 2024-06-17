@@ -15,6 +15,8 @@ Base.@kwdef mutable struct ESN
     sigma     ::Float64 = 1.0
     sgmd      ::Function= tanh
     F_in      ::Function= (f,u) -> R_in * f(u)
+    input_active ::Bool = true
+    output_active::Bool = true
 end
 
 
@@ -39,4 +41,5 @@ Base.@kwdef mutable struct DWESN
     classes_Routs   ::Dict{Int16,Dict{Int16,Union{Array{Float64},CuArray}}} = Dict()
     esns            ::Dict{Int,Any} = Dict(_esn.id => _esn for l in layers for _esn in l.esns)
     connections     ::Dict{Int,Any} = Dict()
+    output_size     ::Int           = sum([_e.R_size for layer in layers for _e in layer.esns if _e.output_active])
 end
