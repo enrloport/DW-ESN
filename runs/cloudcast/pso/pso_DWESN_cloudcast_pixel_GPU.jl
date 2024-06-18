@@ -92,7 +92,7 @@ function fitness(_x)
         , "Sigmas"              => _params_esn[:sigma]
         , "R_scalings"          => _params_esn[:R_scaling]
         )
-    edges = Dict( "Edge "+string(i) => _x[i] for i in 1:length(_x) )
+    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
     
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
