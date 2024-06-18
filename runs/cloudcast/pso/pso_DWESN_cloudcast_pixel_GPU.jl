@@ -49,13 +49,13 @@ pso_dict = Dict(
     ,"max_iter" => 30
 )
 
-function fitness(x)
+function fitness(_x)
 
     _params[:layers] = [ [300,300,300],[300,300,300]]
     _params[:connections] = Dict(
-         4 => [(1,x[1]),(2,x[2]),(3,x[3])]
-        ,5 => [(1,x[4]),(2,x[5]),(3,x[6])]
-        ,6 => [(1,x[7]),(2,x[8]),(3,x[9])]
+         4 => [(1,_x[1]),(2,_x[2]),(3,_x[3])]
+        ,5 => [(1,_x[4]),(2,_x[5]),(3,_x[6])]
+        ,6 => [(1,_x[7]),(2,_x[8]),(3,_x[9])]
     )
     _params[:active_inputs] = [1,2,3]
     _params[:active_outputs]= [4,5,6]
@@ -91,9 +91,11 @@ function fitness(x)
         , "Sigmas"              => _params_esn[:sigma]
         , "R_scalings"          => _params_esn[:R_scaling]
         )
+    edges = Dict( "Edge "+string(i) => _x[i] for i in 1:length(_x) )
+    
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        Wandb.log(_params[:lg], par )
+        Wandb.log(_params[:lg], merge(par,edges) )
     end
     display(par)
 
@@ -102,10 +104,6 @@ function fitness(x)
     end
     _params[:total_time] = tm
     full_log(_params,_params_esn,dwE)
-
-    if _params[:wb]
-        close(_params[:lg])
-    end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
     println("Error: ", dwE.error, "\n", printime  )
