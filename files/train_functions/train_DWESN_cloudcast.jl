@@ -20,7 +20,8 @@ function __make_Rout_DWESN_cloudcast!(dwE,args)
     classes       = args[:classes]
 
     for stp in args[:steps]
-        classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )  # New dataset for each class
+        # New dataset labels for each class
+        classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )
         for t in 1:args[:train_length]-args[:initial_transient]
             lt = args[:train_labels][stp][t+args[:initial_transient]]
             for c in classes
@@ -32,8 +33,8 @@ function __make_Rout_DWESN_cloudcast!(dwE,args)
             classes_Yt = Dict( k => CuArray(classes_Yt[k]) for k in keys(classes_Yt) )
         end
 
-        cudamatrix          = args[:gpu] ? CuArray : Matrix
-        dwE.classes_Routs[stp]   = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
+        cudamatrix              = args[:gpu] ? CuArray : Matrix
+        dwE.classes_Routs[stp]  = Dict( c => cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt[c]))) for c in classes )
     end
 
 end
@@ -41,7 +42,6 @@ end
 
 function __do_train_DWESN_cloudcast!(dwE, args)
     num               = args[:train_length]-args[:initial_transient]
-    flt               = vcat(dwE.layers...)
     dwE.X             = zeros( dwE.output_size + args[:input_size] + 1, num)
     reset_function    = (x) -> zeros(x,1)
 
@@ -50,11 +50,8 @@ function __do_train_DWESN_cloudcast!(dwE, args)
         reset_function    = (x) -> CuArray(zeros(x,1))
     end
 
-    for layer in dwE.layers
-        for _esn in layer.esns
-            _esn.x = reset_function( _esn.R_size)
-        end
-    end
+    # reset states
+    map(_e -> _e.x = reset_function(_e.R_size) , values(dwE.esns) )
 
     __fill_X_DWESN_cloudcast!(dwE,args)
     __make_Rout_DWESN_cloudcast!(dwE,args)
