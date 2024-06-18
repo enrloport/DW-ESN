@@ -11,7 +11,6 @@ _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => false
     ,:confusion_matrix  => false
-    ,:input_to_all      => false
     ,:wb_logger_name    => "DMRESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
@@ -43,16 +42,14 @@ if _params[:wb] using Logging, Wandb end
 dwE=[]
 for _ in 1:repit
     dwE=[]
-    _params[:layers] = [ [200,200],[200,200],[500]]
+    _params[:layers] = [ [300,300,300],[300,300,300]]
     _params[:connections] = Dict(
-        #  1 => [(3,1.0)]
-        # ,2 => [(4,1.0)]
-        3 => [(1,1.0)]
-        ,4 => [(2,1.0)]
-        ,5 => [(1,1.0),(2,1.0),(3,1.0),(4,1.0)]
+         4 => [(1,1.0),(2,1.0),(3,1.0)]
+        ,5 => [(1,1.0),(2,1.0),(3,1.0)]
+        ,6 => [(1,1.0),(2,1.0),(3,1.0)]
     )
-    _params[:active_inputs] = [1,2]
-    _params[:active_outputs]= [5]
+    _params[:active_inputs] = [1,2,3]
+    _params[:active_outputs]= [4,5,6]
 
     sd = 42 #rand(1:10000)
     Random.seed!(sd)
