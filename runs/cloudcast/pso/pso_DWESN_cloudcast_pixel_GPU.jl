@@ -1,4 +1,5 @@
 include("../../../ESN.jl")
+using Metaheuristics
 
 # DATASET
 dir     = "data/"
