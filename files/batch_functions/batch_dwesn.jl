@@ -1,30 +1,17 @@
 
 function do_batch_dwesn(_params_esn, _params)
 
-    p,pe  = _params, _params_esn
-    im_sz = p[:input_size]
+    p,pe          = _params, _params_esn
+    l_r           = vcat(p[:layers]...)
+    szl           = length(l_r)
+    input_sz      = (id) -> id in p[:active_inputs] ? p[:input_size] : 0
+    fsz           = (id) -> sum( [ l_r[i] for i in 1:szl if id in keys(p[:connections]) && i in getfield.(p[:connections][id], 1) ] ) + input_sz(id)
+    id_counter    = 0
+    layers        = []
 
-    layers = []
-    layer1 = layerESN( esns = [
-                ESN( id     = i
-                    ,R      = new_R(p[:layers][1][i], density=pe[:density][1][i], rho=pe[:rho][1][i], gpu=p[:gpu])
-                    ,R_in   = new_R_in(p[:layers][1][i], im_sz , sigma = pe[:sigma][1][i] ,gpu=p[:gpu], density=pe[:Rin_dens][1][i])
-                    ,R_scaling = pe[:R_scaling][1][i], alpha = pe[:alpha][1][i], rho = pe[:rho][1][i], sigma = pe[:sigma][1][i], sgmd = pe[:sgmds][1][i]
-                    ,input_active = i in p[:active_inputs]
-                    ,output_active= i in p[:active_outputs]
-                ) for i in 1:length(p[:layers][1])
-            ])
-    push!(layers,layer1)
-
-    id_counter = 0
-    input_sz = p[:input_to_all] ? im_sz : 0
-
-    l_r = vcat(p[:layers]...)
-    szl = length(l_r)
-    fsz = (id) -> sum( [ l_r[i] for i in 1:szl if i in getfield.(p[:connections][id], 1) ] ) + input_sz
-
-    for l in 2:length(p[:layers])
-        id_counter += length(p[:layers][l-1])
+    for l in 1:length(p[:layers])
+        num = l > 1 ? length(p[:layers][l-1]) : 0
+        id_counter += num
         layer = layerESN( esns = [
             ESN( id     = id_counter + i
                 ,R      = new_R(p[:layers][l][i], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
@@ -35,6 +22,21 @@ function do_batch_dwesn(_params_esn, _params)
             ) for i in 1:length(p[:layers][l])
         ])
         push!(layers,layer)
+
+        # for i in 1:length(p[:layers][l])
+        #     _esns = []
+        #     _e = ESN( 
+        #             id     = id_counter + i
+        #             ,R      = new_R(p[:layers][l][i], density=pe[:density][l][i], rho=pe[:rho][l][i], gpu=p[:gpu])
+        #             ,R_in   = new_R_in(p[:layers][l][i], fsz(id_counter + i) , sigma = pe[:sigma][l][i] ,gpu=p[:gpu], density=pe[:Rin_dens][l][i] )
+        #             ,R_scaling = pe[:R_scaling][l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
+        #             ,input_active = (id_counter + i) in p[:active_inputs]
+        #             ,output_active= (id_counter + i) in p[:active_outputs]
+        #         )
+        #     push!(_e,_esns)
+        # end
+
+        # push!(layers,layerESN(esns = _esns))
     end   
 
     dwE = DWESN(
@@ -42,7 +44,6 @@ function do_batch_dwesn(_params_esn, _params)
         ,beta=p[:beta] 
         ,train_function = p[:train_f]
         ,test_function  = p[:test_f]
-        ,input_to_all   = p[:input_to_all]
         )
     dwE.connections = Dict(
         k => [(dwE.esns[cn[1]],cn[2]) for cn in p[:connections][k] ]
