@@ -6,13 +6,19 @@ dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
+# data_train = ncread(dir*file, "__xarray_dataarray_variable__")
+# file2 = "TestCloud.nc"
+# data_test = ncread(dir*file2, "__xarray_dataarray_variable__")
+# all = cat(data_train, data_test, dims=1)
+# data_train[1,:,:] == all[1,:,:]
+# data_test[1,:,:] == all[size(data_train,1) + 1 ,:,:]
 
 
 # PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => true
+    ,:wb                => false
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
@@ -47,19 +53,21 @@ pso_dict = Dict(
     ,"C1" => 1.5
     ,"C2" => 1.2
     ,"w"  => 0.5
-    ,"max_iter" => 30
+    ,"max_iter" => 20
 )
 
 function fitness(_x)
+    # _u = round.(_x)
+    _u = _x
 
-    _params[:layers] = [ [300,300,300],[300,300,300]]
+    _params[:layers] = [ [100 for _ in 1:10],[300,300,300]]
     _params[:connections] = Dict(
-         4 => [(1,_x[1]),(2,_x[2]),(3,_x[3])]
-        ,5 => [(1,_x[4]),(2,_x[5]),(3,_x[6])]
-        ,6 => [(1,_x[7]),(2,_x[8]),(3,_x[9])]
+         11 => [(i,_u[i]) for i in 1:10]
+        ,12 => [(i,_u[10 + i]) for i in 1:10]
+        ,13 => [(i,_u[20 + i]) for i in 1:10]
     )
-    _params[:active_inputs] = [1,2,3]
-    _params[:active_outputs]= [4,5,6]
+    _params[:active_inputs] = 1:10
+    _params[:active_outputs]= [11,12,13]
 
     sd = 42 #rand(1:10000)
     Random.seed!(sd)
@@ -92,10 +100,10 @@ function fitness(_x)
         , "Sigmas"              => _params_esn[:sigma]
         , "R_scalings"          => _params_esn[:R_scaling]
         )
-    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
+    edges = Dict( "Edge "*string(i) => _u[i] for i in 1:length(_u) )
     
     if _params[:wb]
-        _params[:lg] = wandb_logger(_params[:wb_logger_name])
+        # _params[:lg] = wandb_logger(_params[:wb_logger_name])
         Wandb.log(_params[:lg], merge(par,edges) )
     end
     display(par)
@@ -121,7 +129,6 @@ for _ in 1:repit
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
         Wandb.log(_params[:lg], pso_dict )
     else
-        display(par)
         display(pso_dict)
         println(" ")
     end
@@ -134,8 +141,8 @@ for _ in 1:repit
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    lx = zeros(9)'
-    ux = ones(9)'
+    lx = zeros(30)'
+    ux = ones(30)'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )
@@ -143,7 +150,6 @@ for _ in 1:repit
     if _params[:wb]
         close(_params[:lg])
     end
- 
 
 end
 
