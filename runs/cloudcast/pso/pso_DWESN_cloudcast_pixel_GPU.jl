@@ -18,7 +18,7 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => false
+    ,:wb                => true
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
@@ -57,17 +57,17 @@ pso_dict = Dict(
 )
 
 function fitness(_x)
-    # _u = round.(_x)
+    #_u = round.(_x)
     _u = _x
 
-    _params[:layers] = [ [100 for _ in 1:10],[300,300,300]]
+    _params[:layers] = [ [500 for _ in 1:5],[300,300]]
     _params[:connections] = Dict(
-         11 => [(i,_u[i]) for i in 1:10]
-        ,12 => [(i,_u[10 + i]) for i in 1:10]
-        ,13 => [(i,_u[20 + i]) for i in 1:10]
+         6 => [(i,_u[ i]) for i in 1:5]
+	,7 => [(i,_u[5 + i]) for i in 1:5]
+
     )
-    _params[:active_inputs] = 1:10
-    _params[:active_outputs]= [11,12,13]
+    _params[:active_inputs] = 1:5
+    _params[:active_outputs]= [6,7]
 
     sd = 42 #rand(1:10000)
     Random.seed!(sd)
@@ -141,8 +141,8 @@ for _ in 1:repit
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    lx = zeros(30)'
-    ux = ones(30)'
+    lx = ones(10)' .* -1
+    ux = ones(10)'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )
