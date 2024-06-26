@@ -60,14 +60,17 @@ function fitness(_x)
     #_u = round.(_x)
     _u = _x
 
-    _params[:layers] = [ [500 for _ in 1:5],[300,300]]
+    _params[:layers] = [ [500 for _ in 1:5],[500,500,500],[300,300]]
     _params[:connections] = Dict(
          6 => [(i,_u[ i]) for i in 1:5]
 	,7 => [(i,_u[5 + i]) for i in 1:5]
+	,8 => [(i,_u[10 + i]) for i in 1:5]
+	,9 => [(i,_u[15 + i]) for i in 1:3]
+	,10 => [(i,_u[18 + i]) for i in 1:3]
 
     )
-    _params[:active_inputs] = 1:5
-    _params[:active_outputs]= [6,7]
+    _params[:active_inputs] = vcat( 1:5, [9,10] )
+    _params[:active_outputs]= [9,10]
 
     sd = 42 #rand(1:10000)
     Random.seed!(sd)
@@ -99,6 +102,8 @@ function fitness(_x)
         , "Rhos"                => _params_esn[:rho]
         , "Sigmas"              => _params_esn[:sigma]
         , "R_scalings"          => _params_esn[:R_scaling]
+	, "Active inputs"       => _params[:active_inputs]
+	, "Active outputs"      => _params[:active_outputs]
         )
     edges = Dict( "Edge "*string(i) => _u[i] for i in 1:length(_u) )
     
@@ -141,8 +146,8 @@ for _ in 1:repit
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    lx = ones(10)' .* -1
-    ux = ones(10)'
+    lx = zeros(21)'
+    ux = ones(21)'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )
