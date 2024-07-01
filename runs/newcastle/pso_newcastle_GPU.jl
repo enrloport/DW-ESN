@@ -1,19 +1,19 @@
 include("../../ESN.jl")
+using Metaheuristics
 
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
 
-dir2 = "data/newcastle/"
-file2= "newcastle_cloud.nc"
+file2= "newcastle/newcastle_cloud.nc"
 
 _info     = ncinfo(dir*file)
 
-_imgs   = ncread(dir*file, "__xarray_dataarray_variable__")[:,30-3:30+3,30-3:30+3]
-_windD  = ncgetatt(dir2*file2, "global", "Wind Direction")
-_hum    = ncgetatt(dir2*file2, "global", "Humidity")
-_windS  = ncgetatt(dir2*file2, "global", "Wind Speed")
-_press  = ncgetatt(dir2*file2, "global", "Pressure")
+_imgs   = ncread(dir*file, "__xarray_dataarray_variable__")#[:,30-3:30+3,30-3:30+3]
+_windD  = ncgetatt(dir*file2, "global", "Wind Direction")
+_hum    = ncgetatt(dir*file2, "global", "Humidity")
+_windS  = ncgetatt(dir*file2, "global", "Wind Speed")
+_press  = ncgetatt(dir*file2, "global", "Pressure")
 
 # minimum(_windD)
 # maximum(_windD)
@@ -37,52 +37,66 @@ global maxi, len = 0,length(_hum)
 # end
 maxi = length(_hum)
 
-_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./100, _windS[1:maxi]./100, _press[1:maxi]./1013
+_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./10.0, _press[1:maxi]./101.325
 
-
-
-function split_data_newcastle(imgs, hum, windS, press, steps, trl, tel)
-    d = reshape(imgs,:,49)
-    tar= d[:,25]
-    ext= hcat(windS,press)
-    # ext= hcat(hum,windS,press)
-    aux = hcat(d,ext)
-    
-    tr_x = aux[1:trl, :]
-    te_x = aux[trl+1:trl+tel,:]
-    
-    tr_y = Dict(s => cc_to_int(tar[1+s:trl+s]) for s in steps)
-    te_y = Dict(s => cc_to_int(tar[trl+1+s:trl+tel+s]) for s in steps)
-
-    return tr_x, tr_y, te_x, te_y
-end
-
+# PARAMS
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => true
+    ,:wb                => false
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "MRESN_newcastle_GPU"
+    ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 50000
+    ,:train_length      => 49000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
+    ,:target_pixel      => (30,30)
     ,:radius            => 3
-    ,:steps             => [4]
-    ,:data              => all
+    ,:steps             => [1,2,3,4]
+    ,:data              => _imgs
 )
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
-_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_newcastle(_imgs, _hum, _windS, _press, _params[:steps][1], _params[:train_length], _params[:test_length])
+function split_data_newcastle(;data, train_length, test_length, target_pixel, humidity, preassure, wind_speed, radius, steps=[1])
 
-_params[:input_size] = size(_params[:train_data],2)
+    tp,rd,trl,tel,hum,windS,press = target_pixel, radius, train_length, test_length, humidity, preassure, wind_speed
 
-# u = cc_to_int(_params[:train_data][1,:,:])
-# u2 = cc_to_int(_params[:train_data][2,:,:])
-# Images.Gray.(u./10)
+    d = reshape(cc_to_int(data[:, tp[1]-rd:tp[1]+rd , tp[2]-rd:tp[2]+rd]), :, (2*rd + 1)^2 )
+
+
+    tp = 2*(rd^2 + rd) +1
+
+    ext= hcat(windS,press)
+    # ext= hcat(hum,windS,press)
+    aux = hcat(d,ext)
+
+    train_x   = aux[1:trl         , : ]
+    test_x    = aux[trl+1:trl+tel , : ]
+
+    train_y = Dict(s => d[1+s:trl+s        , tp ] for s in steps)
+    test_y  = Dict(s => d[trl+1+s:trl+tel+s, tp ] for s in steps)
+    
+    return train_x, train_y, test_x, test_y
+end
+
+_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_newcastle(
+    data              = _imgs
+    , train_length    = _params[:train_length]
+    , test_length     = _params[:test_length]
+    , target_pixel    = _params[:target_pixel]
+    , radius          = _params[:radius]
+    , steps           = _params[:steps]
+    , humidity        = _hum
+    , preassure       = _press
+    , wind_speed      = _windS
+    )
+
+
+_params[:input_size] = size(_params[:train_data])[2]
+
     
 if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
@@ -106,7 +120,7 @@ function fitness(_x)
     _params[:active_inputs] = [1,2,3,4,5,6,7]
     _params[:active_outputs]= [6,7]
 
-    sd = rand(1:10000)
+    sd = 42 #rand(1:10000)
     Random.seed!(sd)
 
     _params_esn = Dict{Symbol,Any}(
@@ -134,25 +148,26 @@ function fitness(_x)
         , "Rhos"                => _params_esn[:rho]
         , "Sigmas"              => _params_esn[:sigma]
         , "R_scalings"          => _params_esn[:R_scaling]
+        , "Active inputs"       => _params[:active_inputs]
+        , "Active outputs"      => _params[:active_outputs]
         )
+    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
+
     if _params[:wb]
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        Wandb.log(_params[:lg], par )
+        Wandb.log(_params[:lg], merge(par,edges) )
     end
     display(par)
 
     tm = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
     end
-    # dwE.error = dwE.error[1]
+
     _params[:total_time] = tm
     full_log(_params,_params_esn,dwE)
-    if _params[:wb]
-        close(_params[:lg])
-    end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    println("Error: ", dwE.error[4], "\n", printime  )
+    println("Error: ", dwE.error, "\n", printime  )
 
     return dwE.error[4]
 end
@@ -165,7 +180,6 @@ for _ in 1:repit
         _params[:lg] = wandb_logger(_params[:wb_logger_name])
         Wandb.log(_params[:lg], pso_dict )
     else
-        display(par)
         display(pso_dict)
         println(" ")
     end
