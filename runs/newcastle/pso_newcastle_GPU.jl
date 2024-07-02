@@ -143,9 +143,9 @@ function fitness(_x)
         , "Initial transient"   => _params[:initial_transient]
         , "Active inputs"       => _params[:active_inputs]
         , "Active outputs"      => _params[:active_outputs]
-        , "Total time"          => _params[:total_time]
-        , "Train time"          => _params[:train_time]
-        , "Test time"           => _params[:test_time]
+        # , "Total time"          => _params[:total_time]
+        # , "Train time"          => _params[:train_time]
+        # , "Test time"           => _params[:test_time]
         , "Layers"              => _params[:layers]
         , "Sigmoids"            => _params_esn[:sgmds]
         , "Alphas"              => _params_esn[:alpha]
@@ -170,14 +170,14 @@ function fitness(_x)
         , "density min"         => minimum( vcat( _params_esn[:density]...) )
         , "density max"         => maximum( vcat( _params_esn[:density]...) )
     )
-    merge!(to_log,err_dict)
+    # merge!(to_log,err_dict)
     edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
 
     tm = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
     end
 
-    err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in params[:steps] )
+    err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in _params[:steps] )
 
     if _params[:wb]
     #    _params[:lg] = wandb_logger(_params[:wb_logger_name])
