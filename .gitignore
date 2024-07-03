@@ -2,6 +2,7 @@
 wandb/
 
 # Files
+*.h5
 *.nc
 *.png
 *.csv
