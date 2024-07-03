@@ -1,13 +1,23 @@
 include("../../ESN.jl")
 using DelimitedFiles
 
+using HDF5, H5Zblosc, H5Zbzip2, H5Zlz4, H5Zzstd
+
 # DATASET
-dir     = "data/"
-file    = "accidentes20G_2023_12_test_kike3.csv"
+dir     = "data/komobi/"
+file    = "accidentes20G_2023_12_18_2.h5"
 
-data = CSV.read(dir*file, DataFrame, header=false)
 
-data
+_d = h5open(dir*file, "r")
+# data = CSV.read(dir*file, DataFrame, header=false)
+
+
+data = read(_d)
+
+data["data"]
+data["time_windows"]
+data["index"]
+
 
 
 # PARAMS
