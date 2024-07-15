@@ -44,15 +44,11 @@ for N in [1000,2000,3000,4000,5000]
     for _ in 1:repit
         dwE=[]
         _params[:layers] = [ [N] ]
-        _params[:connections] = Dict(
-            4 => [(1,1.0),(2,1.0),(3,1.0)]
-            ,5 => [(1,1.0),(2,1.0),(3,1.0)]
-            ,6 => [(1,1.0),(2,1.0),(3,1.0)]
-        )
-        _params[:active_inputs] = [1,2,3]
-        _params[:active_outputs]= [4,5,6]
+        _params[:connections] = Dict()
+        _params[:active_inputs] = [1]
+        _params[:active_outputs]= [1]
 
-        sd = 42 #rand(1:10000)
+        sd = rand(1:10000)
         Random.seed!(sd)
         # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
