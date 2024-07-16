@@ -47,7 +47,7 @@ if _params[:wb] using Logging, Wandb end
 for r in [2,3,4,5,6]
     for _ in 1:repit
         dwE=[]
-        _params[:layers] = [(r,300)]
+        _params[:layers] = [ [300 for _ in 1:r] ]
         _params[:connections] = Dict()
         _params[:active_inputs] = 1:r
         _params[:active_outputs]= 1:r
