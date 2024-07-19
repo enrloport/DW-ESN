@@ -45,7 +45,9 @@ for _l in [2,3,4,5]
     for _ in 1:repit
         dwE=[]
         _params[:layers] = [ [300] for _ in 1:_l ]
-        _params[:connections] = Dict()
+        _params[:connections] = Dict(
+            2 => [(1,1.0)]
+        )
         _params[:active_inputs] = [1]
         _params[:active_outputs]= [_l]
 
@@ -80,6 +82,8 @@ for _l in [2,3,4,5]
             , "Rhos"                => _params_esn[:rho]
             , "Sigmas"              => _params_esn[:sigma]
             , "R_scalings"          => _params_esn[:R_scaling]
+            , "Active inputs"       => _params[:active_inputs] 
+            , "Active outputs"      => _params[:active_outputs]
             )
         if _params[:wb]
             _params[:lg] = wandb_logger(_params[:wb_logger_name])
