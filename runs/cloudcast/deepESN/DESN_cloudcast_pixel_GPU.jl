@@ -44,23 +44,29 @@ for _l in [2,3,4,5]
 
     for _ in 1:repit
         dwE=[]
-        _params[:layers] = [(1,300) for _ in 1:_l]
+        _params[:layers] = [ [300] for _ in 1:_l ]
+        _params[:connections] = Dict()
+        _params[:active_inputs] = [1]
+        _params[:active_outputs]= [_l]
+
+
         sd = rand(1:10000)
         Random.seed!(sd)
+        # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
         _params_esn = Dict{Symbol,Any}(
-            :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
-            ,:density  => [rand(Uniform(0.1,0.3),num_e[1] ) for num_e in _params[:layers]]
-            ,:Rin_dens => [rand(Uniform(0.1,0.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:rho      => [rand(Uniform(1.0,4.0),num_e[1] ) for num_e in _params[:layers]]
-            ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
+            :R_scaling => [rand(Uniform(0.5,1.5),length(layer) ) for layer in _params[:layers]]
+            ,:alpha    => [rand(Uniform(0.3,0.7),length(layer) ) for layer in _params[:layers]]
+            ,:density  => [rand(Uniform(0.1,0.3),length(layer) ) for layer in _params[:layers]]
+            ,:Rin_dens => [rand(Uniform(0.1,0.5),length(layer) ) for layer in _params[:layers]]
+            ,:rho      => [rand(Uniform(1.0,4.0),length(layer) ) for layer in _params[:layers]]
+            ,:sigma    => [rand(Uniform(0.5,1.5),length(layer) ) for layer in _params[:layers]]
+            ,:sgmds    => [ [tanh for _ in 1:length(_params[:layers][i])] for i in 1:length(_params[:layers]) ]
         )
 
         par = Dict(
             "Seed"                => sd
-            , "Total nodes"         => sum( map(x -> x[1]*x[2], _params[:layers] ) )
+            , "Total nodes"         => sum( map(x -> sum(x), _params[:layers] ) )
             , "Layers"              => _params[:layers]
             , "Train length"        => _params[:train_length]
             , "Test length"         => _params[:test_length]
@@ -93,6 +99,12 @@ for _l in [2,3,4,5]
 
         printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
         println("Error: ", dwE.error, "\n", printime  )
+
+        for l in 1:length(dwE.layers)
+            for r in dwE.layers[l].esns
+                println("Layer: ",l, ", id: ", r.id)
+            end
+        end
 
     end
 end
