@@ -46,7 +46,8 @@ for _l in [2,3,4,5]
         dwE=[]
         _params[:layers] = [ [300] for _ in 1:_l ]
         _params[:connections] = Dict(
-            2 => [(1,1.0)]
+            x => [((x-1),1.0)]
+            for x in 2:_l
         )
         _params[:active_inputs] = [1]
         _params[:active_outputs]= [_l]
