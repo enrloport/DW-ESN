@@ -48,7 +48,7 @@ for _l in [2,3,4,5]
         _params[:layers] = [ [_w,300] for _ in 1:_l ]
         _params[:connections] = Dict(
             (x+1) => [((x-_w+1),1.0)]
-            for x in _w:_l*_w
+            for x in _w:(_l*_w)-1
         )
         _params[:active_inputs] = 1:_w*_l
         _params[:active_outputs]= (_l-1)*_w+1:_l*_w
