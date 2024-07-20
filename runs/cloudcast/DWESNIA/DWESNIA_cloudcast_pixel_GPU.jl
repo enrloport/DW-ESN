@@ -40,11 +40,11 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
+_w = 2
 for _l in [2,3,4,5]
 
     for _ in 1:repit
         dwE=[]
-        _w = 2
         _params[:layers] = [ [_w,300] for _ in 1:_l ]
         _params[:connections] = Dict(
             (x+1) => [((x-_w+1),1.0)]
