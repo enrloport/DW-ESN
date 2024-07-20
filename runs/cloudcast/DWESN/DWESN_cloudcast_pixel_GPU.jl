@@ -10,7 +10,7 @@ all     = ncread(dir*file, "__xarray_dataarray_variable__")
 repit = 100
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => true
+    ,:wb                => false
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "DWESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
@@ -45,7 +45,7 @@ for _l in [2,3,4,5]
 
     for _ in 1:repit
         dwE=[]
-        _params[:layers] = [ [_w,300] for _ in 1:_l ]
+        _params[:layers] = [ [300 for _ in 1:_w] for _ in 1:_l ]
         _params[:connections] = Dict(
             (x+1) => [((x-_w+1),1.0)]
             for x in _w:(_l*_w)-1
