@@ -12,8 +12,7 @@ _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:input_to_all      => true
-    ,:wb_logger_name    => "DWESNIA_cloudcast_pixel_H1to4-100_GPU"
+    ,:wb_logger_name    => "DWESN_cloudcast_pixel_H1to4-100_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
@@ -45,23 +44,33 @@ for _l in [2,3,4,5]
 
     for _ in 1:repit
         dwE=[]
-        _params[:layers] = [(3,300) for _ in 1:_l]
+        _w = 2
+        _params[:layers] = [ [_w,300] for _ in 1:_l ]
+        _params[:connections] = Dict(
+            (x+1) => [((x-_w+1),1.0)]
+            for x in _w:_l*_w
+        )
+        _params[:active_inputs] = 1:_w*_l
+        _params[:active_outputs]= (_l-1)*_w+1:_l*_w
+
+
         sd = rand(1:10000)
         Random.seed!(sd)
+        # _params[:layers] = [(2,300)]; sd=776; Random.seed!(sd) # error 0.2875
 
         _params_esn = Dict{Symbol,Any}(
-            :R_scaling => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:alpha    => [rand(Uniform(0.3,0.7),num_e[1] ) for num_e in _params[:layers] ]
-            ,:density  => [rand(Uniform(0.1,0.3),num_e[1] ) for num_e in _params[:layers]]
-            ,:Rin_dens => [rand(Uniform(0.1,0.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:rho      => [rand(Uniform(1.0,4.0),num_e[1] ) for num_e in _params[:layers]]
-            ,:sigma    => [rand(Uniform(0.5,1.5),num_e[1] ) for num_e in _params[:layers]]
-            ,:sgmds    => [ [tanh for _ in 1:_params[:layers][i][1]] for i in 1:length(_params[:layers]) ]
+            :R_scaling => [rand(Uniform(0.5,1.5),length(layer) ) for layer in _params[:layers]]
+            ,:alpha    => [rand(Uniform(0.3,0.7),length(layer) ) for layer in _params[:layers]]
+            ,:density  => [rand(Uniform(0.1,0.3),length(layer) ) for layer in _params[:layers]]
+            ,:Rin_dens => [rand(Uniform(0.1,0.5),length(layer) ) for layer in _params[:layers]]
+            ,:rho      => [rand(Uniform(1.0,4.0),length(layer) ) for layer in _params[:layers]]
+            ,:sigma    => [rand(Uniform(0.5,1.5),length(layer) ) for layer in _params[:layers]]
+            ,:sgmds    => [ [tanh for _ in 1:length(_params[:layers][i])] for i in 1:length(_params[:layers]) ]
         )
 
         par = Dict(
             "Seed"                => sd
-            , "Total nodes"         => sum( map(x -> x[1]*x[2], _params[:layers] ) )
+            , "Total nodes"         => sum( map(x -> sum(x), _params[:layers] ) )
             , "Layers"              => _params[:layers]
             , "Train length"        => _params[:train_length]
             , "Test length"         => _params[:test_length]
@@ -75,6 +84,8 @@ for _l in [2,3,4,5]
             , "Rhos"                => _params_esn[:rho]
             , "Sigmas"              => _params_esn[:sigma]
             , "R_scalings"          => _params_esn[:R_scaling]
+            , "Active inputs"       => _params[:active_inputs] 
+            , "Active outputs"      => _params[:active_outputs]
             )
         if _params[:wb]
             _params[:lg] = wandb_logger(_params[:wb_logger_name])
@@ -94,6 +105,12 @@ for _l in [2,3,4,5]
 
         printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
         println("Error: ", dwE.error, "\n", printime  )
+
+        for l in 1:length(dwE.layers)
+            for r in dwE.layers[l].esns
+                println("Layer: ",l, ", id: ", r.id)
+            end
+        end
 
     end
 end
