@@ -25,7 +25,7 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
         , test_length     = args[:test_length]
         , target_pixel    = args[:target_pixel]
         , radius          = args[:radius]
-        , step            = args[:steps]
+        , steps           = args[:steps]
         )
         sz_train = size(args[:train_data])[1]
         i_t      = args[:initial_transient]
