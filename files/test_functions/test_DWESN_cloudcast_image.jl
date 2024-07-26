@@ -1,21 +1,13 @@
 # Function to test an already trained deepwideESN struct
 function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
     test_length = args[:test_length]
-
-    # classes_Y    = Array{Tuple{Float64,Int,Int}}[]
-    # wrong_class  = []
-    # dwE.Y      = []
-
     classes_Y   = Dict( stp => Array{Tuple{Float64,Int,Int}}[] for stp in args[:steps])
     wrong_class = Dict( stp => [] for stp in args[:steps])
     dwE.Y       = Dict( stp => [] for stp in args[:steps])
     f           = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
 
     d1,d2,d3 = test_length, size(args[:data])[2], size(args[:data])[3]
-    # res = zeros(d1,d2,d3)
     res = Dict(stp => zeros(d1,d2,d3) for stp in args[:steps])
-
-
 
     for i in 1+args[:radius]:d2-args[:radius], j in 1+args[:radius]:d3-args[:radius]
         args[:target_pixel] = (i,j)
@@ -38,7 +30,7 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
 
         for t in 1:test_length
             _step_cloudcast(dwE, args[:test_data], t, f)
-            x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns]...  , f([1]) )
+            x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
             pairs   = Dict( stp => [] for stp in args[:steps])
 
             for stp in args[:steps]
@@ -66,15 +58,7 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
 
     dwE.Y = res
 
-    # dwE.wrong_class= wrong_class
-    # dwE.classes_Y  = classes_Y
-    # dwE.Y_target   = args[:test_labels]
-    # dwE.error      = length(wrong_class) / length(classes_Y)
-
-
     dwE.wrong_class= wrong_class
     dwE.classes_Y  = classes_Y
     dwE.Y_target   = args[:test_labels]
-    # dwE.error      = length(wrong_class[1]) / length(classes_Y[1])
-    # dwE.error      = [length(wrong_class[stp]) / length(classes_Y[stp]) for stp in args[:steps]]
 end
