@@ -4,6 +4,8 @@ wandb/
 # Files
 *.h5
 *.nc
+*.jpg
+*.svg
 *.png
 *.csv
 *.zip
