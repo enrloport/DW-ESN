@@ -4,6 +4,10 @@ include("../../../ESN.jl")
 dir     = "data/"
 file    = "TrainCloud.nc"
 all     = ncread(dir*file, "__xarray_dataarray_variable__")
+file2   = "TestCloud.nc"
+all2    = ncread(dir*file2, "__xarray_dataarray_variable__")
+
+_all = cat(all,all2, dims=(1))
 
 # PARAMS
 repit = 1
@@ -15,19 +19,19 @@ _params = Dict{Symbol,Any}(
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 49000
-    ,:test_length       => 1000
+    ,:train_length      => 52000
+    ,:test_length       => 500
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (30,30)
+    ,:target_pixel      => (70,105)
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
-    ,:data              => all
+    ,:data              => _all
 )
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
-    data              = all
+    data              = _all
     , train_length    = _params[:train_length]
     , test_length     = _params[:test_length]
     , target_pixel    = _params[:target_pixel]
