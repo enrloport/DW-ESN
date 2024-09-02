@@ -19,7 +19,7 @@ _params = Dict{Symbol,Any}(
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_image!
-    ,:target_pixel      => (30,30)
+    ,:target_pixel      => (70,105)
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
     ,:data              => all
@@ -41,7 +41,7 @@ if _params[:wb] using Logging, Wandb end
 
 global dwE=[]
 for _ in 1:repit
-    dwE=[]
+   global dwE=[]
     _params[:layers] = [ [200,200,200,200,200],[300,300]]
     _params[:connections] = Dict(
          6 => [(1,0.842),(2,1.0),(3,0.121),(4,0.5652),(5,1.0)]
@@ -88,7 +88,7 @@ for _ in 1:repit
     display(par)
 
     tm = @elapsed begin
-        dwE = do_batch_dwesn(_params_esn,_params)
+        global dwE = do_batch_dwesn(_params_esn,_params)
     end
     _params[:total_time] = tm
     full_log(_params,_params_esn,dwE)
@@ -114,9 +114,7 @@ using DelimitedFiles
 
 _t = _params[:train_length] + _params[:test_length]
 for h in _params[:steps]
-    writedlm( "mresn_cloudcast_image_multipred__"*string(_t)*"+"*string(h)*".csv",  dwE.Y[h][1,:,:], ',')
+    writedlm( "mresn_cloudcast_image_multipred__"*string(_t)*"+"*string(h)*".csv",  dwE.error[h], ',')
 end
 
 # EOF
-
-
