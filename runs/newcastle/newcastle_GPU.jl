@@ -27,7 +27,7 @@ _press  = ncgetatt(dir*file2, "global", "Pressure")
 # minimum(_press)
 # maximum(_press)
 
-global maxi, len = 0,length(_hum) 
+global maxi, len = 0,length(_hum)
 # for i in 1:len
 #     if isnan(_hum[i])
 #         global maxi = i-1
@@ -37,7 +37,7 @@ global maxi, len = 0,length(_hum)
 # end
 maxi = length(_hum)
 
-_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./10.0, _press[1:maxi]./101.325
+_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./100.0, _press[1:maxi]./1000
 
 # PARAMS
 repit = 200
@@ -45,7 +45,7 @@ _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "newcastle_GPU"
+    ,:wb_logger_name    => "newcastle_GPU_norm"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
@@ -53,7 +53,7 @@ _params = Dict{Symbol,Any}(
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (30,30)
+    ,:target_pixel      => (25,50)
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
     ,:data              => _imgs
@@ -104,19 +104,11 @@ if _params[:wb] using Logging, Wandb end
 
 for _ in 1:repit
 
-    if _params[:wb]
-        _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        Wandb.log(_params[:lg], pso_dict )
-    else
-        display(pso_dict)
-        println(" ")
-    end
-
     dwE=[]
     _params[:layers] = [ [200 for _ in 1:5],[300,300]]
     _params[:connections] = Dict(
-         6 => [(i,_x[i]) for i in 1:5 ]
-        ,7 => [(i,_x[5+i]) for i in 1:5 ]
+         6 => [(i,1.0) for i in 1:5 ]
+        ,7 => [(i,1.0) for i in 1:5 ]
     )
     _params[:active_inputs] = [1,2,3,4,5,6,7]
     _params[:active_outputs]= [6,7]
@@ -140,13 +132,11 @@ for _ in 1:repit
         , "Layers"              => _params[:layers]
         , "Train length"        => _params[:train_length]
         , "Test length"         => _params[:test_length]
+        , "Target Pixel"        => _params[:target_pixel]
         , "Radius"              => _params[:radius]
         , "Initial transient"   => _params[:initial_transient]
         , "Active inputs"       => _params[:active_inputs]
         , "Active outputs"      => _params[:active_outputs]
-        # , "Total time"          => _params[:total_time]
-        # , "Train time"          => _params[:train_time]
-        # , "Test time"           => _params[:test_time]
         , "Layers"              => _params[:layers]
         , "Sigmoids"            => _params_esn[:sgmds]
         , "Alphas"              => _params_esn[:alpha]
@@ -171,8 +161,6 @@ for _ in 1:repit
         , "density min"         => minimum( vcat( _params_esn[:density]...) )
         , "density max"         => maximum( vcat( _params_esn[:density]...) )
     )
-    # merge!(to_log,err_dict)
-    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
 
     tm = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
@@ -182,7 +170,7 @@ for _ in 1:repit
 
     if _params[:wb]
        _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        Wandb.log(_params[:lg], merge(par,edges, err_dict) )
+        Wandb.log(_params[:lg], merge(par, err_dict) )
     end
     display(par)
 
