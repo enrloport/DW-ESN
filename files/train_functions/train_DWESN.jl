@@ -17,29 +17,20 @@ end
 
 function __make_Rout_DWESN!(dwE,args)
     X             = dwE.X
-    # classes       = args[:classes]
 
     for stp in args[:steps]
-        # New dataset labels for each class
-        # classes_Yt    = Dict( c => zeros(args[:train_length]-args[:initial_transient]) for c in classes )
-        classes_Yt    = args[:train_labels][stp][args[:initial_transient]+1:end]
-        # for t in 1:args[:train_length]-args[:initial_transient]
-        #     lt = args[:train_labels][stp][t+args[:initial_transient]]
-        #     for c in classes
-        #         y = lt == c ? 1.0 : 0.0
-        #         classes_Yt[c][t] = y
-        #     end
-        # end
+        y_target    = args[:train_labels][stp][args[:initial_transient]+1:end]
+        
         if args[:gpu]
-            # classes_Yt = Dict( k => CuArray(classes_Yt[k]) for k in keys(classes_Yt) )
-            classes_Yt = CuArray(classes_Yt)
+            y_target = CuArray(y_target)
         end
 
-        cudamatrix              = args[:gpu] ? CuArray : Matrix
-        println("X ", size(X))
-        println("B ", size(dwE.beta))
-        println("Y ", size(classes_Yt))
-        dwE.R_out[stp]  = cudamatrix(transpose((X*transpose(X) + dwE.beta*I) \ (X*classes_Yt)))
+        cudamatrix  = args[:gpu] ? CuArray : Matrix
+
+        t1 = (X*transpose(X) + dwE.beta*I)
+        t2 = (X*y_target)
+
+        dwE.R_out[stp]  = cudamatrix(transpose(t1 \ t2))
     end
 
 end

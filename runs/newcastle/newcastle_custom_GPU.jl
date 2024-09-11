@@ -15,29 +15,13 @@ _hum    = ncgetatt(dir*file2, "global", "Humidity")
 _windS  = ncgetatt(dir*file2, "global", "Wind Speed")
 _press  = ncgetatt(dir*file2, "global", "Pressure")
 
-# minimum(_windD)
-# maximum(_windD)
-
-# minimum(_hum)
-# maximum(_hum)
-
-# minimum(_windS)
-# maximum(_windS)
-
-# minimum(_press)
-# maximum(_press)
-
-global maxi, len = 0,length(_hum)
-# for i in 1:len
-#     if isnan(_hum[i])
-#         global maxi = i-1
-#         println(i)
-#         break
-#     end
-# end
 maxi = length(_hum)
 
 _imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./100.0, _press[1:maxi]./1000
+
+_windD = _windD[1:maxi] ./ 360
+
+maximum(_windD)
 
 # PARAMS
 repit = 1
@@ -59,18 +43,16 @@ _params = Dict{Symbol,Any}(
 )
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
-function split_data_newcastle_custom(;data, train_length, test_length, target_pixel, humidity, preassure, wind_speed, radius, steps=[1])
+function split_data_newcastle_custom(;data, train_length, test_length, target_pixel, humidity, preassure, wind_speed, wind_dir, radius, steps=[1])
 
-    tp,rd,trl,tel,hum,windS,press = target_pixel, radius, train_length, test_length, humidity, preassure, wind_speed
+    tp,rd,trl,tel,hum,press,windS, windD = target_pixel, radius, train_length, test_length, humidity, preassure, wind_speed, wind_dir
 
     d = reshape(cc_to_int(data[:, tp[1]-rd:tp[1]+rd , tp[2]-rd:tp[2]+rd]), :, (2*rd + 1)^2 )
 
-    tp = 2*(rd^2 + rd) +1
-
     train_x = d[1:trl         , : ]
     test_x  = d[trl+1:trl+tel , : ]
-    train_y = Dict(s => hum[1+s:trl+s         ] for s in steps)
-    test_y  = Dict(s => hum[trl+1+s:trl+tel+s ] for s in steps)
+    train_y = Dict(s => windD[1+s:trl+s         ] for s in steps)
+    test_y  = Dict(s => windD[trl+1+s:trl+tel+s ] for s in steps)
     
     return train_x, train_y, test_x, test_y
 end
@@ -85,6 +67,7 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , humidity        = _hum
     , preassure       = _press
     , wind_speed      = _windS
+    , wind_dir        = _windS
     )
 
 
@@ -93,8 +76,8 @@ if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
 
+dwE=[]
 for _ in 1:repit
-    dwE=[]
     _params[:layers] = [ [200 for _ in 1:5],[300,300]]
     _params[:connections] = Dict(
          6 => [(i,1.0) for i in 1:5 ]
@@ -156,7 +139,7 @@ for _ in 1:repit
         dwE = do_batch_dwesn(_params_esn,_params)
     end
 
-    err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in _params[:steps] )
+    # err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in _params[:steps] )
 
     if _params[:wb]
        _params[:lg] = wandb_logger(_params[:wb_logger_name])
@@ -165,10 +148,6 @@ for _ in 1:repit
     display(par)
 
     _params[:total_time] = tm
-    full_log(_params,_params_esn,dwE)
-
-    printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    println("Error: ", dwE.error, "\n", printime  )
 
     if _params[:wb]
         close(_params[:lg])
@@ -177,4 +156,11 @@ for _ in 1:repit
 end
 
 
+dwE.Y
+dwE.Y_target
+
+for s in _params[:steps]
+    err = sum([(dwE.Y[s][i] - dwE.Y_target[s][i])^2 for i in 1:length(dwE.Y)]) / _params[:test_length]
+    println("MSE step ", string(s), " -> ", err)
+end
 # EOF
