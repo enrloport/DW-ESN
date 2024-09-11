@@ -15,17 +15,7 @@ _hum    = ncgetatt(dir*file2, "global", "Humidity")
 _windS  = ncgetatt(dir*file2, "global", "Wind Speed")
 _press  = ncgetatt(dir*file2, "global", "Pressure")
 
-# minimum(_windD)
-# maximum(_windD)
-
-# minimum(_hum)
-# maximum(_hum)
-
-# minimum(_windS)
-# maximum(_windS)
-
-# minimum(_press)
-# maximum(_press)
+for x in [_hum, _windS, _windD, _press] println("min: ", minimum(x), ", max: ", maximum(x)) end
 
 global maxi, len = 0,length(_hum)
 # for i in 1:len
@@ -36,16 +26,15 @@ global maxi, len = 0,length(_hum)
 #     end
 # end
 maxi = length(_hum)
-
-_imgs, _hum, _windS, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./100.0, _press[1:maxi]./1000
+_imgs, _hum, _windS, _press, _windD = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./100.0, _press[1:maxi]./1000, _windD[1:maxi]./360.0
 
 # PARAMS
-repit = 200
+repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "newcastle_GPU_norm"
+    ,:wb_logger_name    => "newcastle_GPU__P_WS_WD"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
@@ -60,17 +49,16 @@ _params = Dict{Symbol,Any}(
 )
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
-function split_data_newcastle(;data, train_length, test_length, target_pixel, humidity, preassure, wind_speed, radius, steps=[1])
+function split_data_newcastle(;data, train_length, test_length, target_pixel, humidity, preassure, wind_speed, wind_dir, radius, steps=[1])
 
-    tp,rd,trl,tel,hum,windS,press = target_pixel, radius, train_length, test_length, humidity, preassure, wind_speed
+    tp,rd,trl,tel   = target_pixel, radius, train_length, test_length
+    H,P,WS,WD       = humidity, preassure, wind_speed, wind_dir
 
     d = reshape(cc_to_int(data[:, tp[1]-rd:tp[1]+rd , tp[2]-rd:tp[2]+rd]), :, (2*rd + 1)^2 )
 
-
     tp = 2*(rd^2 + rd) +1
 
-    ext= hcat(windS,press)
-    # ext= hcat(hum,windS,press)
+    ext= hcat(WS,WD,P)
     aux = hcat(d,ext)
 
     train_x   = aux[1:trl         , : ]
@@ -92,6 +80,7 @@ _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:t
     , humidity        = _hum
     , preassure       = _press
     , wind_speed      = _windS
+    , wind_dir        = _windD
     )
 
 
