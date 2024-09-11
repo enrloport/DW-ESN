@@ -31,7 +31,7 @@ Base.@kwdef mutable struct DWESN
     train_function  ::Function      = __do_train_DWESN_cloudcast!
     test_function   ::Function      = __do_test_DWESN_cloudcast_pixel!
     X               ::Mtx           = zeros(1,1)
-    R_out           ::Mtx           = zeros(1,1)
+    R_out           ::Any           = Dict()
     beta            ::Float64       = 1.0e-8
     wrong_class     ::Any           = []
     classes_Y       ::Any           = []
