@@ -17,6 +17,7 @@ Base.@kwdef mutable struct ESN
     F_in      ::Function= (f,u) -> R_in * f(u)
     input_active ::Bool = true
     output_active::Bool = true
+    additional_inputs::Vector = []
 end
 
 
