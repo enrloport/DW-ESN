@@ -1,16 +1,31 @@
 function __fill_X_DWESN_cloudcast!(dwE, args::Dict )
 
-    f = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
+    f     = args[:gpu] ? (u) -> CuArray(u) : (u) -> u
+    td    = args[:train_data]
+    tde   = :train_data_extra in keys(args) ? args[:train_data_extra] : Dict()
+    at    = :attention_inputs in keys(args) ? (dic, t) -> Dict( k => dic[k][t,:] for k in keys(dic) ) : (dic, t) -> Dict()
+
+    println(keys(tde))
 
     for t in 1:args[:initial_transient]
-        _step_cloudcast(dwE, args[:train_data], t, f)
+        ut = reshape(td[t,:,:], :, 1)
+        _step_cloudcast(dwE,  ut, f; extra_inputs = at(tde,t))
     end
 
-    for t in args[:initial_transient]+1:args[:train_length]
-        t_in = t - args[:initial_transient]
-        _step_cloudcast(dwE, args[:train_data], t, f)
 
-        dwE.X[:,t_in] = vcat(f(args[:train_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
+    for t in args[:initial_transient]+1:args[:train_length]
+        t_in    = t - args[:initial_transient]
+        ut      = reshape(td[t,:,:], :, 1)
+
+        _step_cloudcast(dwE, ut, f; extra_inputs = at(tde,t))
+        # dwE.X[:,t_in] = vcat(f(ut), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
+
+        input           = f(ut)
+        extra_inputs    = keys(tde) != [] ? [ tde[k][t] for k in keys(tde) ] : []
+        states          = [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]
+        constant_term   = f([1])
+
+        dwE.X[:,t_in] = vcat(input, extra_inputs... , states...  , constant_term )
     end
 end
 
@@ -42,7 +57,8 @@ end
 
 function __do_train_DWESN_cloudcast!(dwE, args)
     num               = args[:train_length]-args[:initial_transient]
-    dwE.X             = zeros( dwE.output_size + args[:input_size] + 1, num)
+    extra_size        = :extra_data_size in keys(args) ? sum(args[:extra_data_size]) : 0
+    dwE.X             = zeros( dwE.output_size + args[:input_size] + extra_size + 1, num)
     reset_function    = (x) -> zeros(x,1)
 
     if args[:gpu]
