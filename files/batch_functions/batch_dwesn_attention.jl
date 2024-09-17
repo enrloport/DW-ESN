@@ -1,7 +1,7 @@
 function get_input_size(id, p)
     sz = id in p[:active_inputs] ? p[:input_size] : 0
     if :attention_inputs in keys(p) && id in keys(p[:attention_inputs])
-        sz += sum( [ p[:additional_inputs_size][i] for i in p[:attention_inputs][id] ] )
+        sz += sum( [ p[:extra_data_size][i] for i in p[:attention_inputs][id] ] )
     end
     return sz
 end
@@ -26,7 +26,7 @@ function do_batch_dwesn_attention(_params_esn, _params)
                 ,R_scaling        = pe[:R_scaling][l][i], alpha  = pe[:alpha][l][i], rho = pe[:rho][l][i], sigma = pe[:sigma][l][i], sgmd = pe[:sgmds][l][i]
                 ,input_active     = (id_counter + i) in p[:active_inputs]
                 ,output_active    = (id_counter + i) in p[:active_outputs]
-                ,additional_inputs= !(:attention_inputs in keys(p)) || !((id_counter + i) in p[:attention_inputs]) ? [] : p[:attention_inputs][(id_counter + i)]
+                ,additional_inputs= !(:attention_inputs in keys(p)) || !((id_counter + i) in keys(p[:attention_inputs])) ? [] : p[:attention_inputs][(id_counter + i)]
             ) for i in 1:length(p[:layers][l])
         ])
         push!(layers,layer)

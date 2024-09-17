@@ -4,11 +4,9 @@ using Metaheuristics
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
+file2   = "newcastle/newcastle_cloud.nc"
 
-file2= "newcastle/newcastle_cloud.nc"
-
-_info     = ncinfo(dir*file)
-
+_info   = ncinfo(dir*file)
 _imgs   = ncread(dir*file, "__xarray_dataarray_variable__")#[:,30-3:30+3,30-3:30+3]
 _windD  = ncgetatt(dir*file2, "global", "Wind Direction")
 _hum    = ncgetatt(dir*file2, "global", "Humidity")
@@ -20,27 +18,27 @@ maxi = length(_hum)
 _imgs, _hum, _windS, _windD, _press = _imgs[1:maxi,:,:], _hum[1:maxi]./10.0, _windS[1:maxi]./100.0, _windD[1:maxi]./360.0, _press[1:maxi]./1000
 
 # PARAMS
-repit = 1
+repit = 200
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => false
+    ,:wb                => true
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "newcastle_attention_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
-    ,:initial_transient => 100
-    ,:train_length      => 4900
-    ,:test_length       => 100
+    ,:initial_transient => 1000
+    ,:train_length      => 49000
+    ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
     ,:target_pixel      => (25,50)
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
-    ,:train_data        => Dict()
-    ,:test_data         => Dict()
+    ,:train_data_extra  => Dict()
+    ,:test_data_extra   => Dict()
 )
 
-function split_aditional_data(train_length, test_length, var)
+function split_data_extra(train_length, test_length, var)
     tr,te   = train_length, test_length
     train_x = var[1:tr        , : ]
     test_x  = var[tr+1:tr+te  , : ]
@@ -49,8 +47,7 @@ function split_aditional_data(train_length, test_length, var)
 end
 
 
-
-_params[:train_data][1],  _params[:train_labels],  _params[:test_data][1],  _params[:test_labels] = split_data_cloudcast(
+_params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
     data              = _imgs
     , train_length    = _params[:train_length]
     , test_length     = _params[:test_length]
@@ -59,20 +56,16 @@ _params[:train_data][1],  _params[:train_labels],  _params[:test_data][1],  _par
     , steps           = _params[:steps]
     )
 
-_params[:train_data][2],  _params[:test_data][2] = split_aditional_data( _params[:train_length], _params[:test_length], _press)
-_params[:train_data][3],  _params[:test_data][3] = split_aditional_data( _params[:train_length], _params[:test_length], _windS)
-
+_params[:train_data_extra][1],  _params[:test_data_extra][1] = split_data_extra( _params[:train_length], _params[:test_length], _press)
+_params[:train_data_extra][2],  _params[:test_data_extra][2] = split_data_extra( _params[:train_length], _params[:test_length], _windS)
 
 _params[:input_size] = ((_params[:radius]*2)+1)^2
-_params[:additional_inputs_size] = [size(_params[:train_data][i],2) for i in 2:length(keys(_params[:train_data]))]
-
+_params[:extra_data_size] = [size(_params[:train_data_extra][i],2) for i in 1:length(keys(_params[:train_data_extra]))]
     
 if _params[:gpu] CUDA.allowscalar(false) end
 if _params[:wb] using Logging, Wandb end
 
-
-# for _ in 1:repit
-
+for _ in 1:repit
     dwE=[]
     _params[:layers] = [ [200 for _ in 1:5],[300,300]]
     _params[:connections] = Dict(
@@ -80,14 +73,14 @@ if _params[:wb] using Logging, Wandb end
         ,7 => [(i,1.0) for i in 1:5 ]
     )
 
-    _params[:active_inputs]     = [1,2,3,4,5,6,7]
+    _params[:active_inputs]     = [1,2,3,6,7]
     _params[:active_outputs]    = [6,7]
-    # _params[:attention_inputs]  = Dict( 
-    #     4 => [1]
-    #     ,5 => [2]
-    # )
+    _params[:attention_inputs]  = Dict( 
+        4 => [1]
+        ,5 => [2]
+    )
 
-    sd = 42#rand(1:10000)
+    sd = rand(1:10000)
     Random.seed!(sd)
 
     _params_esn = Dict{Symbol,Any}(
@@ -136,10 +129,6 @@ if _params[:wb] using Logging, Wandb end
         , "density max"         => maximum( vcat( _params_esn[:density]...) )
     )
 
-
-
-
-    include("../../ESN.jl")
     tm = @elapsed begin
         dwE = do_batch_dwesn_attention(_params_esn,_params)
     end
@@ -162,7 +151,7 @@ if _params[:wb] using Logging, Wandb end
         close(_params[:lg])
     end
 
-# end
+end
 
 
 # EOF
