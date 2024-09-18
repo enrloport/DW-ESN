@@ -5,8 +5,6 @@ function __fill_X_DWESN_cloudcast!(dwE, args::Dict )
     tde   = :train_data_extra in keys(args) ? args[:train_data_extra] : Dict()
     at    = :attention_inputs in keys(args) ? (dic, t) -> Dict( k => dic[k][t,:] for k in keys(dic) ) : (dic, t) -> Dict()
 
-    println(keys(tde))
-
     for t in 1:args[:initial_transient]
         ut = reshape(td[t,:,:], :, 1)
         _step_cloudcast(dwE,  ut, f; extra_inputs = at(tde,t))
