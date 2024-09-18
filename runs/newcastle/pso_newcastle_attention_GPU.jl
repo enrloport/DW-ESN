@@ -97,10 +97,7 @@ function fitness(_x)
         ,7 => [(i,_x[5+i]) for i in 1:5 ]
     )
 
-    # _params[:active_inputs] = [1,2,3,4,5,6,7]
-    # _params[:active_outputs]= [6,7]
-
-    sd = rand(1:10000)
+    sd = 42 #rand(1:10000)
     Random.seed!(sd)
 
     _params_esn = Dict{Symbol,Any}(
@@ -123,9 +120,6 @@ function fitness(_x)
         , "Initial transient"   => _params[:initial_transient]
         , "Active inputs"       => _params[:active_inputs]
         , "Active outputs"      => _params[:active_outputs]
-        # , "Total time"          => _params[:total_time]
-        # , "Train time"          => _params[:train_time]
-        # , "Test time"           => _params[:test_time]
         , "Layers"              => _params[:layers]
         , "Sigmoids"            => _params_esn[:sgmds]
         , "Alphas"              => _params_esn[:alpha]
@@ -150,7 +144,6 @@ function fitness(_x)
         , "density min"         => minimum( vcat( _params_esn[:density]...) )
         , "density max"         => maximum( vcat( _params_esn[:density]...) )
     )
-    # merge!(to_log,err_dict)
     edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
 
     tm = @elapsed begin
@@ -160,21 +153,15 @@ function fitness(_x)
     err_dict = Dict("Error_step_"*string(s) => dwE.error[s] for s in _params[:steps] )
 
     if _params[:wb]
-    #    _params[:lg] = wandb_logger(_params[:wb_logger_name])
         Wandb.log(_params[:lg], merge(par,edges, err_dict) )
     end
-    display(par)
-
-    _params[:total_time] = tm
-    # full_log(_params,_params_esn,dwE)
+    # display(par)
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
     println("Error: ", dwE.error, "\n", printime  )
 
     return dwE.error[4]
 end
-
-
 
 for _ in 1:repit
 
@@ -203,7 +190,6 @@ for _ in 1:repit
     if _params[:wb]
         close(_params[:lg])
     end
- 
 
 end
 
