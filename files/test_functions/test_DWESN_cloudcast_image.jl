@@ -33,12 +33,14 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
 
 
         for it in sz_train-i_t:sz_train
-            _step_cloudcast(dwE, args[:train_data], it, f)
+            ut = reshape(args[:train_data][it,:,:], :, 1)
+            _step_cloudcast(dwE, ut, f)
         end
 
 
         for t in 1:test_length
-            _step_cloudcast(dwE, args[:test_data], t, f)
+            ut      = reshape(args[:train_data][t,:,:], :, 1)
+            _step_cloudcast(dwE, ut, f)
             x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
             pairs   = Dict( stp => [] for stp in args[:steps])
 
