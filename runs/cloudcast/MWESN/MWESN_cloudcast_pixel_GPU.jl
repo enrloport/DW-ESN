@@ -10,20 +10,20 @@ all2    = ncread(dir*file2, "__xarray_dataarray_variable__")
 _all = cat(all,all2, dims=(1))
 
 # PARAMS
-repit = 200
+repit = 20
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "MWESN_cloudcast_pixel_25-50_GPU"
+    ,:wb_logger_name    => "MWESN_cloudcast_pixel_103-93_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 49000
-    ,:test_length       => 1000
+    ,:train_length      => 52000
+    ,:test_length       => 500
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (25,50)
+    ,:target_pixel      => (103,93)
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
     # ,:data              => _all

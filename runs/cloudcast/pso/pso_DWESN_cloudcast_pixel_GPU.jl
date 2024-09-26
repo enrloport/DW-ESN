@@ -4,31 +4,33 @@ using Metaheuristics
 # DATASET
 dir     = "data/"
 file    = "TrainCloud.nc"
-all     = ncread(dir*file, "__xarray_dataarray_variable__")
+# all     = ncread(dir*file, "__xarray_dataarray_variable__")
 
-# data_train = ncread(dir*file, "__xarray_dataarray_variable__")
-# file2 = "TestCloud.nc"
-# data_test = ncread(dir*file2, "__xarray_dataarray_variable__")
-# all = cat(data_train, data_test, dims=1)
+data_train = ncread(dir*file, "__xarray_dataarray_variable__")
+file2 = "TestCloud.nc"
+data_test = ncread(dir*file2, "__xarray_dataarray_variable__")
+all = cat(data_train, data_test, dims=1)
+
 # data_train[1,:,:] == all[1,:,:]
 # data_test[1,:,:] == all[size(data_train,1) + 1 ,:,:]
 
 
 # PARAMS
+tp = (103,93)
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_H1to4-100_GPU"
+    ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_52000__"*string(tp)*"_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 49000
+    ,:train_length      => 52000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
-    ,:target_pixel      => (30,30)
+    ,:target_pixel      => tp
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
     ,:data              => all
@@ -60,17 +62,14 @@ function fitness(_x)
     #_u = round.(_x)
     _u = _x
 
-    _params[:layers] = [ [500 for _ in 1:5],[500,500,500],[300,300]]
+    _params[:layers] = [ [200 for _ in 1:5],[300,300]]
     _params[:connections] = Dict(
          6 => [(i,_u[ i]) for i in 1:5]
-	,7 => [(i,_u[5 + i]) for i in 1:5]
-	,8 => [(i,_u[10 + i]) for i in 1:5]
-	,9 => [(i,_u[15 + i]) for i in 1:3]
-	,10 => [(i,_u[18 + i]) for i in 1:3]
+        ,7 => [(i,_u[5 + i]) for i in 1:5]
 
     )
-    _params[:active_inputs] = vcat( 1:5, [9,10] )
-    _params[:active_outputs]= [9,10]
+    _params[:active_inputs] = vcat( 1:7 )
+    _params[:active_outputs]= [6,7]
 
     sd = 42 #rand(1:10000)
     Random.seed!(sd)
@@ -146,8 +145,8 @@ for _ in 1:repit
         ,options = Options(iterations=pso_dict["max_iter"])
     )
 
-    lx = zeros(21)'
-    ux = ones(21)'
+    lx = (ones(10)').*-1
+    ux = ones(10)'
     lx_ux = vcat(lx,ux)
 
     res = optimize( fitness, lx_ux, pso )

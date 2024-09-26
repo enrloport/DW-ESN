@@ -144,7 +144,8 @@ function fitness(_x)
         , "density min"         => minimum( vcat( _params_esn[:density]...) )
         , "density max"         => maximum( vcat( _params_esn[:density]...) )
     )
-    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:length(_x) )
+    lx    = length(_x)
+    edges = Dict( "Edge "*string(i) => _x[i] for i in 1:lx )
 
     tm = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
