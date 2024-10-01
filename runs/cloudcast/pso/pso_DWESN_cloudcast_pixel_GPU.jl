@@ -16,17 +16,17 @@ all = cat(data_train, data_test, dims=1)
 
 
 # PARAMS
-tp = (103,93)
+tp = (105,91)
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => true
     ,:confusion_matrix  => false
-    ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_52000__"*string(tp)*"_GPU"
+    ,:wb_logger_name    => "pso_DWESN_cloudcast_pixel_48000__"*string(tp)*"_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 52000
+    ,:train_length      => 49000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
