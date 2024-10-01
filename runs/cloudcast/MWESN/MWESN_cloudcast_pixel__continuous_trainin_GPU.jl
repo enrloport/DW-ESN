@@ -14,14 +14,14 @@ tp = (30,30)
 repit = 1000
 _params = Dict{Symbol,Any}(
      :gpu               => true
-    ,:wb                => false
+    ,:wb                => true
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "MWESN_cloudcast_pixel_continuous_training_"*string(tp)*"_GPU"
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:start_point       => 44000
-    ,:initial_transient => 1000
-    ,:train_length      => 5000
+    ,:initial_transient => 500
+    ,:train_length      => 2000
     ,:test_length       => 1
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
@@ -88,7 +88,7 @@ display(par)
 dwE=[]
 _s, _e = _params[:start_point] + 1, _params[:start_point] + 1000
 
-_err = 0
+global _err = 0
 for t in _s:_e
 
     _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
@@ -108,27 +108,26 @@ for t in _s:_e
     _params[:total_time] = tm
     full_log(_params,_params_esn,dwE)
 
-    if _params[:wb]
-        close(_params[:lg])
-    end
-
-    printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    println("Error: ", dwE.error, "\n", printime  )
-
-    # for l in 1:length(dwE.layers)
-    #     for r in dwE.layers[l].esns
-    #         println("Layer: ",l, ", id: ", r.id)
-    #     end
-    # end
-    # println("Y: ", dwE.Y)
-    # println("O: ", _params[:test_labels])
     if dwE.Y[4][1][1] != Int8(_params[:test_labels][4][1]) 
-        _err += 1
+        global _err += 1
     end
+    printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm)
+    println("Time "*string(t)*", Error: ", _err, "\n", printime  )
 end
 
-println(_err)
 
+println(global _err)
+
+par["Error"] = _err
+if _params[:wb]
+  _params[:lg] = wandb_logger(_params[:wb_logger_name])
+  Wandb.log(_params[:lg], par )
+end
+
+
+if _params[:wb]
+    close(_params[:lg])
+end
 
 # EOF
 
