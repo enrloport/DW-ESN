@@ -11,6 +11,7 @@ _all = cat(all,all2, dims=(1))
 
 
 # PARAMS
+tp = (103,93)
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
@@ -24,13 +25,12 @@ _params = Dict{Symbol,Any}(
     ,:test_length       => 17664 - 4 #steps
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_image!
-    ,:target_pixel      => (103,93)
+    ,:target_pixel      => tp
     ,:radius            => 3
     ,:steps             => [1,2,3,4]
     ,:data              => _all
 )
 
-tp = (103,93)
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(

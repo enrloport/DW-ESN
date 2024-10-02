@@ -9,10 +9,9 @@ all2    = ncread(dir*file2, "__xarray_dataarray_variable__")
 
 _all = cat(all,all2, dims=(1))
 
-
 # PARAMS
-tp = (113,13)
 repit = 1
+tp = (30,30)
 _params = Dict{Symbol,Any}(
      :gpu               => true
     ,:wb                => false
@@ -22,7 +21,7 @@ _params = Dict{Symbol,Any}(
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
     ,:train_length      => 52416
-    ,:test_length       => 17664 - 4 #steps
+    ,:test_length       => (17664 - 4)
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_image!
     ,:target_pixel      => tp
@@ -51,8 +50,8 @@ for _ in 1:repit
    global dwE=[]
     _params[:layers] = [ [200,200,200,200,200],[300,300]]
     _params[:connections] = Dict(
-         6 => [(1,0.47657),(2,0.69909),(3,-0.56312),(4,0.25954),(5,-0.48739)]
-        ,7 => [(1,0.45762),(2,0.33312),(3,-0.16019),(4,-0.80672),(5,-0.72288)]
+         6 =>  [(1,0.92041),(2,-0.27942),(3,-1),(4,1),(5,0.76853)]
+        ,7 => [(1,1),(2,-1),(3,0.95453),(4,-1),(5,-0.53581)]
     )
     _params[:active_inputs] = [1,2,3,4,5,6,7]
     _params[:active_outputs]= [6,7]
@@ -105,7 +104,6 @@ for _ in 1:repit
     end
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
-    # println("Error: ", dwE.error, "\n", printime  )
 
 end
 
@@ -116,7 +114,7 @@ using DelimitedFiles
 
 _t = _params[:train_length] + _params[:test_length]
 for h in _params[:steps]
-    writedlm( "mresn_cloudcast_image_optimized__"*string(tp)*"__full__"*string(_t)*"+"*string(h)*".csv",  dwE.error[h], ',')
+    writedlm( "mresn_cloudcast_image__"*string(tp)*"__full__"*string(_t)*"+"*string(h)*".csv",  dwE.error[h], ',')
 end
 
 # EOF
