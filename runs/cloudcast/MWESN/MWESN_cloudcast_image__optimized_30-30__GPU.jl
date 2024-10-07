@@ -33,7 +33,7 @@ _params = Dict{Symbol,Any}(
 _params[:input_size] = ((_params[:radius]*2)+1)^2
 
 _params[:train_data],  _params[:train_labels],  _params[:test_data],  _params[:test_labels] = split_data_cloudcast(
-    data              = all
+    data              = _all
     , train_length    = _params[:train_length]
     , test_length     = _params[:test_length]
     , target_pixel    = _params[:target_pixel]
