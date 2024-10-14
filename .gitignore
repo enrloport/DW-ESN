@@ -9,7 +9,7 @@ wandb/
 *.png
 *.csv
 *.zip
-nohup.out
+nohup*.out
 csv_reader.jl
 
 # Backup Files
