@@ -13,7 +13,7 @@ _all = cat(all,all2, dims=(1))
 repit = 1
 tp = (30,30)
 _params = Dict{Symbol,Any}(
-     :gpu               => true
+     :gpu               => false
     ,:wb                => false
     ,:confusion_matrix  => false
     ,:wb_logger_name    => "DMRESNIA_cloudcast_image__GPU"
