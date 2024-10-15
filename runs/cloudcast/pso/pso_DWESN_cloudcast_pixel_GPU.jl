@@ -16,7 +16,7 @@ all = cat(data_train, data_test, dims=1)
 
 
 # PARAMS
-tp = (105,91)
+tp = (30,30)
 repit = 1
 _params = Dict{Symbol,Any}(
      :gpu               => true
@@ -26,7 +26,7 @@ _params = Dict{Symbol,Any}(
     ,:classes           => [0,1,2,3,4,5,6,7,8,9,10]
     ,:beta              => 1.0e-8
     ,:initial_transient => 1000
-    ,:train_length      => 49000
+    ,:train_length      => 48000
     ,:test_length       => 1000
     ,:train_f           => __do_train_DWESN_cloudcast!
     ,:test_f            => __do_test_DWESN_cloudcast_pixel!
@@ -51,7 +51,7 @@ if _params[:wb] using Logging, Wandb end
 
 
 pso_dict = Dict(
-    "N"  => 20
+    "N"  => 30
     ,"C1" => 1.5
     ,"C2" => 1.2
     ,"w"  => 0.5
@@ -106,17 +106,17 @@ function fitness(_x)
         )
     edges = Dict( "Edge "*string(i) => _u[i] for i in 1:length(_u) )
     
-    if _params[:wb]
-        # _params[:lg] = wandb_logger(_params[:wb_logger_name])
-        Wandb.log(_params[:lg], merge(par,edges) )
-    end
-    display(par)
+    # if _params[:wb]
+    #     # _params[:lg] = wandb_logger(_params[:wb_logger_name])
+    #     Wandb.log(_params[:lg], merge(par,edges) )
+    # end
+    # display(par)
 
     tm = @elapsed begin
         dwE = do_batch_dwesn(_params_esn,_params)
     end
     _params[:total_time] = tm
-    full_log(_params,_params_esn,dwE)
+    full_log(_params,_params_esn,dwE,extra=merge(par,edges))
 
     printime = _params[:gpu] ? "Time GPU: " * string(tm) :  "Time CPU: " * string(tm) 
     println("Error: ", dwE.error, "\n", printime  )
