@@ -8,7 +8,21 @@ Some minor pre-processing is needed to match the cloud types described in CloudC
 ===#
 
 function cc_to_int(img)
-    return map(x-> x > 253 ? Int8(0) : x-4 > 0 ? Int8((x-4)) : Int8(0) , img)
+    aux = map(x-> x > 253 ? Int8(0) : x-4 > 0 ? Int8((x-4)) : Int8(0) , img)
+    classes = Dict(
+        0 => 0 
+        ,1 => 1
+        ,2 => 1
+        ,3 => 2
+        ,4 => 3
+        ,5 => 3
+        ,6 => 1
+        ,7 => 3
+        ,8 => 3
+        ,9 => 3
+        ,10=> 3 
+    )
+    return [classes[x] for x in aux]
 end
 
 function cc_to_float(img)
