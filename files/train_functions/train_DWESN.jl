@@ -3,12 +3,18 @@ function __fill_X_DWESN!(dwE, args::Dict )
     f = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
 
     for t in 1:args[:initial_transient]
-        _step_cloudcast(dwE, args[:train_data], t, f)
+        # _step_cloudcast(dwE, args[:train_data], t, f)
+
+        ut = reshape(args[:train_data][t,:,:], :, 1)
+        _step_cloudcast(dwE,  ut, f)
     end
 
     for t in args[:initial_transient]+1:args[:train_length]
         t_in = t - args[:initial_transient]
-        _step_cloudcast(dwE, args[:train_data], t, f)
+        # _step_cloudcast(dwE, args[:train_data], t, f)
+
+        ut = reshape(args[:train_data][t,:,:], :, 1)
+        _step_cloudcast(dwE,  ut, f)
 
         dwE.X[:,t_in] = vcat(f(args[:train_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
     end

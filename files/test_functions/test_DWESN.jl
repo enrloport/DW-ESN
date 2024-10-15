@@ -5,7 +5,11 @@ function __do_test_DWESN!(dwE, args::Dict)
     f             = args[:gpu] ? (u) -> CuArray(reshape(u, :, 1)) : (u) -> reshape(u, :, 1)
 
     for t in 1:test_length
-        _step_cloudcast(dwE, args[:test_data], t, f)
+        # _step_cloudcast(dwE, args[:test_data], t, f)
+
+        ut = reshape(args[:test_data][t,:,:], :, 1)
+        _step_cloudcast(dwE,  ut, f)
+
         x = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
 
         for stp in args[:steps]
