@@ -3,57 +3,43 @@ include("ESN.jl")
 using CSV, DataFrames
 
 step = string(4)
+name1= "mresn_cloudcast_4classes_image__(30, 30)__full__70076+"*step*".csv"
+name2= "mresn_cloudcast_4classes_image__(113, 13)__full__70076+"*step*".csv"
 
-# h1 = Matrix(CSV.read("mresn_cloudcast_image_multipred__50000+"*step*".csv", DataFrame, header=false))
-p1 = Matrix(CSV.read("mresn_cloudcast_image_multipred__50000+"*step*".csv", DataFrame, header=false))
-p2 = Matrix(CSV.read("mresn_cloudcast_image_multipred__70-105__50000_52500+"*step*".csv", DataFrame, header=false))
-# p3 = Matrix(CSV.read("mresn_cloudcast_image_multipred__(103, 93)__50000+"*step*".csv", DataFrame, header=false))
-p3 = Matrix(CSV.read("mresn_cloudcast_image_optimized__(103, 93)__500__49500+"*step*".csv", DataFrame, header=false))
-p4 = Matrix(CSV.read("mresn_cloudcast_image_optimized__(113, 13)__500__49500+"*step*".csv", DataFrame, header=false))
+p1 = Matrix(CSV.read(name1, DataFrame, header=false))
+p2 = Matrix(CSV.read(name2, DataFrame, header=false))
 
-
-# allh = hcat(h1,h2,h3,h4)
 hm1 = map( x -> isnan(x) ? 1.0 : x , reshape(p1, 128,128))
 hm2 = map( x -> isnan(x) ? 1.0 : x , reshape(p2, 128,128))
-hm3 = map( x -> isnan(x) ? 1.0 : x , reshape(p3, 128,128))
-hm4 = map( x -> isnan(x) ? 1.0 : x , reshape(p4, 128,128))
 
-Images.Gray.(vcat(hm1,hm2,hm3,hm4))
+# Images.Gray.(vcat(hm1,hm2,hm3,hm4))
+Images.Gray.(vcat(hm1,hm2))
 
-heatmap(hm3, xflip=false, yflip=true, size=(592,512))
+heatmap(hm1, clim=(0,1), xflip=false, yflip=true, size=(592,512))
+heatmap(hm2, clim=(0,1), xflip=false, yflip=true, size=(592,512))
 
+hm1[4,27:60] = hm1[4,27:60] .* 0
+hm1[5,34:53] = hm1[5,34:53] .* 0
 
-m1 = reshape(hm1[4:125,4:125], :, 1)
-m2 = reshape(hm2[4:125,4:125], :, 1)
-m3 = reshape(hm3[4:125,4:125], :, 1)
-m4 = reshape(hm4[4:125,4:125], :, 1)
+hm2[4,27:60] = hm2[4,27:60] .* 0
+hm2[5,34:53] = hm2[5,34:53] .* 0
 
+heatmap(hm1, clim=(0,1), xflip=false, yflip=true, size=(592,512))
+heatmap(hm2, clim=(0,1), xflip=false, yflip=true, size=(592,512))
 
-mins = [ minimum([m1[i],m2[i],m3[i],m4[i]]) for i in 1:length(m1) ]
+mn, sd = 1-mean(hm1), std(hm1)
+mn, sd = 1-mean(hm2), std(hm2)
 
-mn, sd = mean(mins), std(mins)
+res = zeros(128,128)
+for i in 4:125
+    for j in 4:125
+        res[i,j] = hm1[i,j] < hm2[i,j] ? hm1[i,j] : hm2[i,j]
+    end
+end
 
-rmin = reshape(mins, 122,122)
+heatmap(res, clim=(0,1), xflip=false, yflip=true, size=(592,512))
 
-Images.Gray.(rmin)
-
-
-heatmap(rmin, clim=(0,1), xflip=false, yflip=true, size=(592,512))
-
-
-
-
-
-mod1 = copy(rmin)
-
-mod1[102,88] = 0
-mod1[110,10] = 0 
-
-
-heatmap(mod1, clim=(0,1), xflip=false, yflip=true, size=(592,512))
-
-
-
+mn, sd = 1-mean(res), std(res)
 
 
 # img = Images.Gray.(vcat(allt, allh))
