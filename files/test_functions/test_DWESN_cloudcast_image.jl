@@ -20,7 +20,6 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
 
     Threads.@threads for i in 1+args[:radius]:sz1-args[:radius]
         for j in 1+args[:radius]:sz2-args[:radius]
-            println( "Pixel (" *string(i)* "," *string(j)* ")" )
             args[:target_pixel] = (i,j)
             args[:train_data],  args[:train_labels],  args[:test_data],  args[:test_labels] = split_data_cloudcast(
             data              = args[:data]
@@ -34,14 +33,14 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
             i_t      = args[:initial_transient]
 
 
-            for it in sz_train-i_t:sz_train
+	    for it in sz_train-(2*i_t):sz_train
                 ut = reshape(args[:train_data][it,:,:], :, 1)
                 _step_cloudcast(dwE, ut, f)
             end
 
 
             for t in 1:test_length
-                ut      = reshape(args[:train_data][t,:,:], :, 1)
+                ut      = reshape(args[:test_data][t,:,:], :, 1)
                 _step_cloudcast(dwE, ut, f)
                 x       = vcat(f(args[:test_data][t,:,:]), [ _e.x for l in dwE.layers for _e in l.esns if _e.output_active]...  , f([1]) )
                 pairs   = Dict( stp => [] for stp in args[:steps])
@@ -59,6 +58,7 @@ function __do_test_DWESN_cloudcast_image!(dwE, args::Dict)
                     end
                 end
             end
+	    println( "Pixel (" *string(i)* "," *string(j)* ") -> ", wrong_class[(i,j)][4]/test_length )
         end
     end
 
